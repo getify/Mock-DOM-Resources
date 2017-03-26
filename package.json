@@ -1,0 +1,21 @@
+{
+	"name": "mock-dom-resources",
+	"version": "0.0.1",
+	"description": "Utility for mocking the DOM APIs to simulate browser resource loading",
+	"main": "./src/index.js",
+	"repository": "getify/mock-dom-resources",
+	"keywords": [
+		"test",
+		"testing",
+		"mock",
+		"DOM",
+		"resource loading"
+	],
+	"bugs": {
+		"url": "https://github.com/getify/mock-dom-resources/issues",
+		"email": "getify@gmail.com"
+	},
+	"homepage": "https://github.com/getify/mock-dom-resources",
+	"author": "Kyle Simpson <getify@gmail.com>",
+	"license": "MIT"
+}
