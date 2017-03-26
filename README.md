@@ -6,7 +6,7 @@ Resources are not actually loaded. This is a simulation. The request for a resou
 
 For fine grained testing purposes, you can configure all aspects of the simulation, including timings, success/error, and even browser capabilities (preloading, script ordered-async, etc).
 
-**Note:** This is not a spec compliant implementation of a DOM, nor a virtual, nor do we even mock the whole DOM API. The only parts that are mocked are what's minimally necessary for the resource loading simulations.
+**Note:** This is not a spec compliant implementation of a DOM, nor a virtual DOM, nor do we even mock the whole DOM API. The only parts that are mocked are what's minimally necessary for the resource loading simulations.
 
 ## License
 

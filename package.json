@@ -3,6 +3,12 @@
 	"version": "0.0.1",
 	"description": "Utility for mocking the DOM APIs to simulate browser resource loading",
 	"main": "./src/index.js",
+	"scripts": {
+		"test": "node scripts/node-tests.js"
+	},
+	"devDependencies": {
+		"qunitjs": "~2.1.1"
+	},
 	"repository": "getify/mock-dom-resources",
 	"keywords": [
 		"test",
