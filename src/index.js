@@ -13,7 +13,7 @@
 	// **************************************
 
 	function createMockDOM(opts) {
-		opts = opts ? JSON.parse( JSON.stringify( opts ) ) : {};
+		opts = opts ? Object.assign( {}, opts ) : {};
 		if (!("relList" in opts)) opts.relList = true;
 		if (!("scriptAsync" in opts)) opts.scriptAsync = true;
 		if (!("linkPreload" in opts)) opts.linkPreload = true;
@@ -21,6 +21,7 @@
 		if (!("log" in opts)) opts.log = function log(status) { console.log( JSON.stringify( status ) ); }
 		if (!("error" in opts)) opts.error = function error(err) { throw err; };
 		if (!("resources" in opts)) opts.resources = [];
+		if (!("sequentialIds" in opts)) opts.sequentialIds = false;
 
 		// setup Element prototype
 		Element.prototype.getElementsByTagName = getElementsByTagName;
@@ -32,6 +33,7 @@
 		Element.prototype.removeEventListener = removeEventListener;
 		Element.prototype.dispatchEvent = dispatchEvent;
 
+		var sequentialId = 0;
 		var loadQueue = [];
 		var silent = true;
 
@@ -98,7 +100,12 @@
 			}
 
 			// ************
-			this._internal_id = Math.floor( Math.random() * 1E6 );
+			if (opts.sequentialIds) {
+				this._internal_id = ++sequentialId;
+			}
+			else {
+				this._internal_id = Math.floor( Math.random() * 1E6 );
+			}
 			this._tagNameNodeLists = {};
 			this._eventHandlers = {};
 		}
