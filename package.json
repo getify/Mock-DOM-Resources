@@ -7,7 +7,8 @@
 		"test": "node scripts/node-tests.js"
 	},
 	"devDependencies": {
-		"qunitjs": "~2.1.1"
+		"qunitjs": "~2.1.1",
+		"stable-timers": "~1.0.0"
 	},
 	"repository": "getify/mock-dom-resources",
 	"keywords": [
