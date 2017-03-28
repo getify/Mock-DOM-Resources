@@ -17,7 +17,10 @@ QUnit.test( "load a script", function test(assert){
 	var script = win.document.createElement( "script" );
 	script.setAttribute( "src", "a.js" );
 	script.addEventListener( "load", function(){
+		var rActual = JSON.stringify( logs );
+
 		assert.strictEqual( rActual, rExpected, "logs" );
+
 		done();
 	} );
 	win.document.head.appendChild( script );
@@ -33,8 +36,6 @@ QUnit.test( "load a script", function test(assert){
 		{ appendChild: 5, internal_id: 2 },
 		{ dispatchEvent: 'load', internal_id: 5 },
   	] );
-
-	var rActual = JSON.stringify( logs );
 } );
 
 

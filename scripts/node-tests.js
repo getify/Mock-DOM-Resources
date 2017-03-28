@@ -4,8 +4,8 @@
 
 var path = require("path");
 
-var StableTimers = require( "stable-timers" );
-StableTimers.replaceGlobals();
+// make timers behave more stably
+require("stable-timers").replaceGlobals();
 
 global.$DOM = require(path.join("..","src","index.js"));
 
