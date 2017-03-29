@@ -1,4 +1,7 @@
-// Mock for DOM resource loading testing
+/*! Mock DOM Resources
+	v1.0.0 (c) 2017 Kyle Simpson
+	MIT License: http://getify.mit-license.org
+*/
 
 (function UMD(name,context,definition){
 	if (typeof define === "function" && define.amd) { define(definition); }
@@ -232,25 +235,42 @@
 
 		function updateTagNameNodeLists(element) {
 			var el = element.parentNode;
+			var tagName = element.tagName.toLowerCase();
+
+			var keys = Object.keys( element._tagNameNodeLists );
+
 
 			// recursively walk up the element tree
 			while (el != null) {
-				el._tagNameNodeLists[element.tagName] = el._tagNameNodeLists[element.tagName] || [];
-				if (!~el._tagNameNodeLists[element.tagName].indexOf( element )) {
-					el._tagNameNodeLists[element.tagName].push( element );
+				el._tagNameNodeLists[tagName] = el._tagNameNodeLists[tagName] || [];
+				if (!~el._tagNameNodeLists[tagName].indexOf( element )) {
+					el._tagNameNodeLists[tagName].push( element );
 				}
+
+				// merge element's node-lists upward
+				for (var i = 0; i < keys.length; i++) {
+					el._tagNameNodeLists[keys[i]] = el._tagNameNodeLists[keys[i]] || [];
+					for (var j = 0; j < element._tagNameNodeLists[keys[i]].length; j++) {
+						if (!~el._tagNameNodeLists[keys[i]].indexOf( element._tagNameNodeLists[keys[i]][j] )) {
+							el._tagNameNodeLists[keys[i]].push( element._tagNameNodeLists[keys[i]][j] );
+						}
+					}
+				}
+
 				el = el.parentNode;
 			}
+
 		}
 
 		function filterTagNameNodeLists(element) {
 			var el = element.parentNode;
+			var tagName = element.tagName.toLowerCase();
 
 			// recursively walk up the element tree
 			while (el != null) {
 				var idx;
-				if (el._tagNameNodeLists[element.tagName] && (idx = el._tagNameNodeLists[element.tagName].indexOf( element )) != -1) {
-					el._tagNameNodeLists[element.tagName].splice( idx, 1 );
+				if (el._tagNameNodeLists[tagName] && (idx = el._tagNameNodeLists[tagName].indexOf( element )) != -1) {
+					el._tagNameNodeLists[tagName].splice( idx, 1 );
 				}
 				el = el.parentNode;
 			}

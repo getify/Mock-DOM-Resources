@@ -75,7 +75,7 @@ function done(results){
 
 function prettyPrint(v) {
 	if (Array.isArray(v)) {
-		return `[${v.toString()}]`;
+		return `[${ v.map( prettyPrint ).toString() }]`;
 	}
 	else if (v && typeof v == "object") {
 		return JSON.stringify(v,function(k,v){
