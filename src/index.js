@@ -1,5 +1,5 @@
 /*! Mock DOM Resources
-	v1.0.1 (c) 2017 Kyle Simpson
+	v2.0.0 (c) 2017 Kyle Simpson
 	MIT License: http://getify.mit-license.org
 */
 
@@ -25,6 +25,12 @@
 		if (!("error" in opts)) opts.error = function error(err) { throw err; };
 		if (!("resources" in opts)) opts.resources = [];
 		if (!("sequentialIds" in opts)) opts.sequentialIds = false;
+
+		// populate `opts.performanceEntries`
+		var performanceEntries = opts.resources.reduce( function findLoaded(entries,resource){
+			if (resource.loaded) entries.push( resource.url );
+			return entries;
+		}, [] );
 
 		// setup Element prototype
 		Element.prototype.getElementsByTagName = getElementsByTagName;
@@ -227,7 +233,7 @@
 
 		// performance.getEntriesByName(..)
 		function getEntriesByName(url) {
-			if (~opts.performanceEntries.indexOf( url )) {
+			if (~performanceEntries.indexOf( url )) {
 				return [url];
 			}
 			return [];

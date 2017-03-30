@@ -61,6 +61,30 @@ QUnit.test( "build DOM", function test(assert){
 	assert.deepEqual( qActual, qExpected, "node tree structure" );
 } );
 
+QUnit.test( "check already loaded resource", function test(assert){
+	assert.expect( 2 );
+
+	var { logs, log, error } = collectLogs();
+
+	var win = $DOM( {
+		sequentialIds: true,
+		log,
+		error,
+		resources: [
+			{ url: "a.js", loaded: true },
+		],
+	} );
+
+	var rExpected = ["a.js"];
+	var pExpected = [];
+
+	var rActual = win.performance.getEntriesByName( "a.js" );
+	var pActual = win.performance.getEntriesByName( "b.js" );
+
+	assert.deepEqual( rActual, rExpected, "found resource" );
+	assert.deepEqual( pActual, pExpected, "resource not found" );
+} );
+
 QUnit.test( "load a script", function test(assert){
 	var done = assert.async();
 	assert.expect( 1 );
@@ -69,8 +93,8 @@ QUnit.test( "load a script", function test(assert){
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", loadDelay: 2, load: true },
 		],
@@ -105,8 +129,8 @@ QUnit.test( "load multiple scripts (ordered async)", function test(assert){
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", loadDelay: 40, load: true },
 			{ url: "b.js", loadDelay: 10, load: true },
@@ -173,8 +197,8 @@ QUnit.test( "load multiple scripts (NO ordered async)", function test(assert){
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", loadDelay: 40, load: true },
 			{ url: "b.js", loadDelay: 10, load: true },
@@ -232,8 +256,8 @@ QUnit.test( "preload a script", function test(assert){
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", preloadDelay: 2, preload: true },
 		],
@@ -272,8 +296,8 @@ QUnit.test( "preload multiple scripts", function test(assert){
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", preloadDelay: 40, preload: true },
 			{ url: "b.js", preloadDelay: 10, preload: true },
@@ -343,8 +367,8 @@ QUnit.test( "preload a script, then load it", function test(assert){
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", preloadDelay: 2, preload: true, loadDelay: 5, load: true },
 		],
@@ -393,8 +417,8 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 
 	var win = $DOM( {
 		sequentialIds: true,
-		log: log,
-		error: error,
+		log,
+		error,
 		resources: [
 			{ url: "a.js", preloadDelay: 40, preload: true, loadDelay: 20, load: true },
 			{ url: "b.js", preloadDelay: 10, preload: true, loadDelay: 30, load: true },
