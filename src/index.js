@@ -1,5 +1,5 @@
 /*! Mock DOM Resources
-	v1.0.0 (c) 2017 Kyle Simpson
+	v1.0.1 (c) 2017 Kyle Simpson
 	MIT License: http://getify.mit-license.org
 */
 
