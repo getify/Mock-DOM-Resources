@@ -680,6 +680,31 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 	}
 } );
 
+QUnit.test( "replace globals", function test(assert){
+	$DOM.replaceGlobals = true;
+	var win = $DOM( {
+		log: function(){},
+		error: function(){},
+	} );
+
+	var rExpected = win;
+	var pExpected = win.document;
+	var qExpected = win.performance;
+	var tExpected = win.Event;
+
+	var rActual = global.window;
+	var pActual = global.document;
+	var qActual = global.performance;
+	var tActual = global.Event;
+
+	assert.expect( 4 );
+	assert.strictEqual( rActual, rExpected, "global.window" );
+	assert.strictEqual( pActual, pExpected, "global.document" );
+	assert.strictEqual( qActual, qExpected, "global.performance" );
+	assert.strictEqual( tActual, tExpected, "global.Event" );
+} );
+
+
 
 
 

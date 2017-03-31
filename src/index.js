@@ -1,5 +1,5 @@
 /*! Mock DOM Resources
-	v2.1.0 (c) 2017 Kyle Simpson
+	v3.0.0 (c) 2017 Kyle Simpson
 	MIT License: http://getify.mit-license.org
 */
 
@@ -9,6 +9,11 @@
 	/* istanbul ignore next */else { context[name] = definition(name,context); }
 })("$DOM",this,function DEF(name,context){
 	"use strict";
+
+	var global = Function("return this")();
+
+	// default to not overwriting by default
+	createMockDOM.replaceGlobals = false;
 
 	return createMockDOM;
 
@@ -71,6 +76,14 @@
 		opts.log( {document: documentElement._internal_id} );
 		opts.log( {head: documentElement.head._internal_id} );
 		opts.log( {body: documentElement.body._internal_id} );
+
+		if (createMockDOM.replaceGlobals) {
+			global.window = mockDOM;
+			global.document = mockDOM.document;
+			global.performance = mockDOM.performance;
+			global.Event = Event;
+			createMockDOM.replaceGlobals = false;
+		}
 
 		return mockDOM;
 
