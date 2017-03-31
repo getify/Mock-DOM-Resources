@@ -2,7 +2,7 @@
 
 A simple utility for mocking the DOM APIs to simulate browser resource preloading and loading.
 
-Resources are not actually loaded. This is a simulation. The request for a resource (i.e. adding a `<script>` elementto the mock DOM) is matched up to a delayed firing of a load or error event as if the resource had actually loaded.
+Resources are not actually loaded. This is a simulation. The request for a resource (i.e. adding a `<script>` element to the mock DOM) is matched up to a delayed firing of a load or error event as if the resource had actually loaded.
 
 For fine grained testing purposes, you can configure all aspects of the simulation, including timings, success/error, and even browser capabilities (preloading, script ordered-async, etc).
 

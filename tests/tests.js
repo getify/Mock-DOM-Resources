@@ -26,6 +26,7 @@ QUnit.test( "build DOM", function test(assert){
 	win.document.body.appendChild( p );
 
 	var pElems = win.document.body.getElementsByTagName( "p" );
+	var aElems = win.document.body.getElementsByTagName( "a" );
 
 	var rExpected = 4;
 	var pExpected = 3;
@@ -49,27 +50,31 @@ QUnit.test( "build DOM", function test(assert){
 		],
 		"_internal_id": 1
 	};
+	var tExpected = ":)";
+	var sExpected = 0;
 
 	var rActual = pElems.length;
 	w.removeChild( y );
 	var pActual = pElems.length;
 	var qActual = JSON.parse( JSON.stringify( win.document, ["tagName","childNodes","innerHTML","_internal_id"] ) );
+	var tActual = p.getAttribute( "innerHTML" );
+	var sActual = aElems.length;
 
-	assert.expect( 3 );
+	assert.expect( 5 );
 	assert.strictEqual( rActual, rExpected, "p elements" );
 	assert.strictEqual( pActual, pExpected, "p elements, after removeChild()" );
 	assert.deepEqual( qActual, qExpected, "node tree structure" );
+	assert.strictEqual( tActual, tExpected, "getAttribute()" );
+	assert.strictEqual( sActual, sExpected, "(no) a elements" );
 } );
 
 QUnit.test( "check already loaded resource", function test(assert){
 	assert.expect( 2 );
 
-	var { logs, log, error } = collectLogs();
-
 	var win = $DOM( {
 		sequentialIds: true,
-		log,
-		error,
+		log: function(){},
+		error: function(){},
 		resources: [
 			{ url: "a.js", loaded: true },
 		],
@@ -83,6 +88,141 @@ QUnit.test( "check already loaded resource", function test(assert){
 
 	assert.deepEqual( rActual, rExpected, "found resource" );
 	assert.deepEqual( pActual, pExpected, "resource not found" );
+} );
+
+QUnit.test( "relList.supports()", function test(assert){
+	var win = $DOM( {
+		log: function(){},
+		error: function(){},
+	} );
+
+	var win2 = $DOM( {
+		linkPreload: false,
+		log: function(){},
+		error: function(){},
+	} );
+
+	var link1 = win.document.createElement( "link" );
+	link1.setAttribute( "rel", "preload" );
+
+	var link2 = win2.document.createElement( "link" );
+	link2.setAttribute( "rel", "preload" );
+
+	var script = win.document.createElement( "script" );
+
+	var rExpected = true;
+	var pExpected = false;
+	var qExpected = false;
+	var tExpected = false;
+
+	var rActual = link1.relList.supports( "preload" );
+	var pActual = link1.relList.supports( "funny" );
+	var qActual = link2.relList.supports( "preload" );
+	var tActual = script.relList.supports( "preload" );
+
+	assert.expect( 4 );
+	assert.strictEqual( rActual, rExpected, "check 'preload'" );
+	assert.strictEqual( pActual, pExpected, "check 'funny'" );
+	assert.strictEqual( qActual, qExpected, "no preloading" );
+	assert.strictEqual( tActual, tExpected, "not <link>" );
+} );
+
+QUnit.test( "event listeners", function test(assert){
+	var win = $DOM( {
+		log: function(){},
+		error: function(){},
+	} );
+
+	var rExpected = 3;
+	var pExpected = 1;
+	var qExpected = 2;
+
+	var rActual = 0;
+	var pActual = 0;
+	var qActual = 0;
+
+	var x = win.document.createElement( "script" );
+	x.addEventListener( "funny", function onfunny(evt){
+		evt.preventDefault();
+		evt.stopPropagation();
+		evt.stopImmediatePropagation();
+		rActual++;
+	} );
+	x.addEventListener( "hello", function onhello(){
+		x.removeEventListener( "hello", onhello );
+		pActual++;
+	} );
+	x.addEventListener( "world", function onworld(){
+		qActual++;
+	} );
+
+	var e1 = win.document.createEvent();
+	x.dispatchEvent( e1 );
+	e1.initEvent( "funny" );
+
+	var e2 = new win.Event( "hello" );
+	var e3 = new win.Event( "world" );
+	var e4 = new win.Event( "!!" );
+
+	x.dispatchEvent( e1 );
+	x.dispatchEvent( e1 );
+	x.dispatchEvent( e1 );
+	x.dispatchEvent( e2 );
+	x.dispatchEvent( e2 );
+	x.dispatchEvent( e3 );
+	x.dispatchEvent( e3 );
+	x.dispatchEvent( e4 );
+
+	assert.expect( 3 );
+	assert.strictEqual( rActual, rExpected, "event prevented" );
+	assert.strictEqual( pActual, pExpected, "event removed" );
+	assert.strictEqual( qActual, qExpected, "event" );
+} );
+
+QUnit.test( "request unknown resources", function test(assert){
+	var { logs, log, error } = collectLogs();
+
+	var wrappedErrorFn = function(msg) {
+		if (msg instanceof Error) {
+			msg = JSON.parse( JSON.stringify( msg, ["message"] ) );
+		}
+		return error( msg );
+	};
+
+	var win = $DOM( {
+		sequentialIds: true,
+		log,
+		error: wrappedErrorFn,
+	} );
+
+	var link1 = win.document.createElement( "link" );
+	link1.setAttribute( "rel", "preload" );
+	link1.setAttribute( "href", "a.js" );
+
+	var link2 = win.document.createElement( "link" );
+	link2.setAttribute( "href", "b.js" );
+
+	win.document.head.appendChild( link1 );
+	win.document.head.appendChild( link2 );
+
+	var rExpected = [
+		{ window: 4 },
+		{ document: 1 },
+		{ head: 2 },
+		{ body: 3 },
+		{ createElement: 'link', internal_id: 5 },
+		{ setAttribute: 'rel | preload', internal_id: 5 },
+		{ setAttribute: 'href | a.js', internal_id: 5 },
+		{ createElement: 'link', internal_id: 6 },
+		{ setAttribute: 'href | b.js', internal_id: 6 },
+		{ appendChild: 5, internal_id: 2 },
+		{ message: 'appendChild: Preload resource not found (a.js; 5)' },
+		{ appendChild: 6, internal_id: 2 },
+		{ message: 'appendChild: Load resource not found (b.js; 6)' },
+	];
+
+	assert.expect( 1 );
+	assert.deepEqual( logs, rExpected, "logs" );
 } );
 
 QUnit.test( "load a script", function test(assert){

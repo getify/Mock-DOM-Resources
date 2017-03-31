@@ -1,12 +1,12 @@
 /*! Mock DOM Resources
-	v2.0.0 (c) 2017 Kyle Simpson
+	v2.1.0 (c) 2017 Kyle Simpson
 	MIT License: http://getify.mit-license.org
 */
 
 (function UMD(name,context,definition){
-	if (typeof define === "function" && define.amd) { define(definition); }
-	else if (typeof module !== "undefined" && module.exports) { module.exports = definition(); }
-	else { context[name] = definition(name,context); }
+	/* istanbul ignore next */if (typeof define === "function" && define.amd) { define(definition); }
+	/* istanbul ignore next */else if (typeof module !== "undefined" && module.exports) { module.exports = definition(); }
+	/* istanbul ignore next */else { context[name] = definition(name,context); }
 })("$DOM",this,function DEF(name,context){
 	"use strict";
 
@@ -53,6 +53,7 @@
 		documentElement.appendChild( documentElement.body );
 		documentElement.baseURI = opts.baseURI;
 		documentElement.createElement = createElement;
+		documentElement.createEvent = createEvent;
 
 		var performanceAPI = {
 			getEntriesByName: getEntriesByName,
@@ -61,6 +62,7 @@
 		var mockDOM = createElement( "window" );
 		mockDOM.document = documentElement;
 		mockDOM.performance = performanceAPI;
+		mockDOM.Event = Event;
 
 		silent = false;
 
@@ -216,9 +218,18 @@
 		function dispatchEvent(evt) {
 			opts.log( {dispatchEvent: evt.type, internal_id: this._internal_id} );
 
+			if (evt.type == null) {
+				opts.error( new Error( "dispatchEvent: Event not initialized (" + this._internal_id + ")" ) );
+				return;
+			}
+
+			evt.target = evt.currentTarget = this;
+
 			if (this._eventHandlers[evt.type]) {
-				for (var i = 0; i < this._eventHandlers[evt.type].length; i++) {
-					try { this._eventHandlers[evt.type][i].call( this, evt ); } catch (err) {}
+				var evtHandlers = this._eventHandlers[evt.type].slice();
+
+				for (var i = 0; i < evtHandlers.length; i++) {
+					try { evtHandlers[i].call( this, evt ); } catch (err) {}
 				}
 			}
 		}
@@ -244,7 +255,6 @@
 			var tagName = element.tagName.toLowerCase();
 
 			var keys = Object.keys( element._tagNameNodeLists );
-
 
 			// recursively walk up the element tree
 			while (el != null) {
@@ -293,10 +303,10 @@
 		function fakePreload(resource,element) {
 			setTimeout( function preload(){
 				if (resource.preload === true) {
-					var evt = createEvent( "load", element );
+					var evt = new Event( "load" );
 				}
 				else {
-					var evt = createEvent( "error", element );
+					var evt = new Event( "error" );
 				}
 
 				element.dispatchEvent( evt );
@@ -305,10 +315,10 @@
 
 		function fakeLoad(resource,element) {
 			if (resource.load === true) {
-				var evt = createEvent( "load", element );
+				var evt = new Event( "load" );
 			}
 			else {
-				var evt = createEvent( "error", element );
+				var evt = new Event( "error" );
 			}
 
 			setTimeout( function load(){
@@ -322,24 +332,31 @@
 			}, resource.loadDelay || 0 );
 		}
 
-		function createEvent(type,target) {
-			return {
-				type: type,
-				name: type,
-				target: target,
-				currentTarget: target,
-				bubbles: false,
-				cancelable: false,
-				composed: false,
-				scoped: false,
-				defaultPrevented: false,
-				timestamp: Date.now(),
-				isTrusted: true,
-				eventPhase: 2, // Event.AT_TARGET
-				preventDefault: function(){ this.defaultPrevented = true; },
-				stopPropagation: function(){},
-				stopImmediatePropagation: function(){},
+		function Event(type) {
+			this.type = type;
+			this.name = type;
+			this.target = null;
+			this.currentTarget = null;
+			this.bubbles = false;
+			this.cancelable = false;
+			this.composed = false;
+			this.scoped = false;
+			this.defaultPrevented = false;
+			this.timestamp = Date.now();
+			this.isTrusted = true;
+			this.eventPhase = 2; // Event.AT_TARGET
+			this.preventDefault = function(){ this.defaultPrevented = true; };
+			this.stopPropagation = function(){};
+			this.stopImmediatePropagation = function(){};
+			this.initEvent = function(type,bubbles,cancelable){
+				this.type = this.name = type;
+				this.bubbles = bubbles;
+				this.cancelable = cancelable;
 			};
+		}
+
+		function createEvent() {
+			return new Event( null );
 		}
 
 		// ensures load event order (queue) for ordered-async
