@@ -339,6 +339,7 @@ QUnit.test( "load multiple scripts (NO ordered async)", function test(assert){
 		sequentialIds: true,
 		log,
 		error,
+		scriptAsync: false,
 		resources: [
 			{ url: "a.js", loadDelay: 40, load: true },
 			{ url: "b.js", loadDelay: 10, load: true },
@@ -551,7 +552,7 @@ QUnit.test( "preload a script, then load it", function test(assert){
 
 QUnit.test( "preload multiple scripts, then load them (ordered async)", function test(assert){
 	var done = assert.async( 3 );
-	assert.expect( 1 );
+	assert.expect( 2 );
 
 	var { logs, log, error } = collectLogs();
 
@@ -614,6 +615,7 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 		{ dispatchEvent: 'load', internal_id: 9 },
 		{ dispatchEvent: 'load', internal_id: 10 },
 	];
+	var pExpected = ["a.js","b.js","c.js"];
 
 	preloadScripts();
 
@@ -670,7 +672,16 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 		script3.setAttribute( "src", "c.js" );
 		script3.setAttribute( "async", false );
 		script3.addEventListener( "load", function(){
-			assert.deepEqual( logs, rExpected, "logs" );
+			var rActual = logs;
+			var pActual =
+				win.performance.getEntriesByName( "a.js" )
+				.concat(
+					win.performance.getEntriesByName( "b.js" ),
+					win.performance.getEntriesByName( "c.js" )
+				);
+
+			assert.deepEqual( rActual, rExpected, "logs" );
+			assert.deepEqual( pActual, pExpected, "performance entries" );
 			done();
 		} );
 

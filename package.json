@@ -1,10 +1,15 @@
 {
 	"name": "mock-dom-resources",
-	"version": "3.0.0",
+	"version": "4.0.0",
 	"description": "Utility for mocking the DOM APIs to simulate browser resource loading",
 	"main": "./src/index.js",
 	"scripts": {
-		"test": "node scripts/node-tests.js"
+		"test": "node scripts/node-tests.js",
+		"coverage": "istanbul cover scripts/node-tests.js",
+		"build-core": "node scripts/build-core.js",
+		"build": "npm run build-core",
+		"prepare": "npm run build",
+		"prepublish": "npm run build && npm test"
 	},
 	"devDependencies": {
 		"qunitjs": "~2.3.0",

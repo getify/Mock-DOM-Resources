@@ -1,8 +1,3 @@
-/*! Mock DOM Resources
-	v3.0.0 (c) 2017 Kyle Simpson
-	MIT License: http://getify.mit-license.org
-*/
-
 (function UMD(name,context,definition){
 	/* istanbul ignore next */if (typeof define === "function" && define.amd) { define(definition); }
 	/* istanbul ignore next */else if (typeof module !== "undefined" && module.exports) { module.exports = definition(); }
@@ -31,9 +26,28 @@
 		if (!("resources" in opts)) opts.resources = [];
 		if (!("sequentialIds" in opts)) opts.sequentialIds = false;
 
+		// copy resources list and normalize its entries
+		opts.resources = opts.resources.map(function fix(resource){
+			var newEntry = { url: resource.url };
+			if (resource.loaded === true) {
+				newEntry.loaded = true;
+				newEntry.preload = true;
+				newEntry.preloadDelay = 0;
+				newEntry.load = true;
+				newEntry.loadDelay = 0;
+			}
+			else {
+				if ("preload" in resource) newEntry.preload = resource.preload;
+				if ("preloadDelay" in resource) newEntry.preloadDelay = resource.preloadDelay;
+				if ("load" in resource) newEntry.load = resource.load;
+				if ("loadDelay" in resource) newEntry.loadDelay = resource.loadDelay;
+			}
+			return newEntry;
+		} );
+
 		// populate `opts.performanceEntries`
 		var performanceEntries = opts.resources.reduce( function findLoaded(entries,resource){
-			if (resource.loaded) entries.push( resource.url );
+			if (resource.loaded === true) entries.push( resource.url );
 			return entries;
 		}, [] );
 
@@ -322,6 +336,8 @@
 					var evt = new Event( "error" );
 				}
 
+				addPerformanceEntry( resource.url );
+
 				element.dispatchEvent( evt );
 			}, resource.preloadDelay || 0 );
 		}
@@ -342,6 +358,8 @@
 				else {
 					element.dispatchEvent( evt );
 				}
+
+				addPerformanceEntry( resource.url );
 			}, resource.loadDelay || 0 );
 		}
 
@@ -407,6 +425,12 @@
 
 			if (!found) {
 				opts.error( new Error( "updateLoadQueue: Entry not found (" + url + "; " + element._internal_id + ")" ) );
+			}
+		}
+
+		function addPerformanceEntry(url) {
+			if (!~performanceEntries.indexOf( url )) {
+				performanceEntries.push( url );
 			}
 		}
 	}
