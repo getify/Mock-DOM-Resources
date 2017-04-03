@@ -10,7 +10,7 @@ Resources are not actually loaded. This is a simulation. The request for a resou
 
 For fine grained testing purposes, you can configure all aspects of the simulation, including timings, success/error, and even browser capabilities (preloading, script ordered-async, etc).
 
-**Note:** This is not a spec compliant implementation of a DOM, nor a virtual DOM, nor do we even mock the whole DOM API. The only parts that are mocked are what's minimally necessary for the resource loading simulations.
+**Note:** This is not a spec compliant implementation of a DOM, nor a virtual DOM, nor do we even mock the whole DOM API. The only parts that are mocked are what's minimally necessary for common resource loading simulations.
 
 ## API
 
@@ -71,7 +71,7 @@ Failed: http://some.tld/b.css
 
 ### Options
 
-Before calling `$DOM(..)`, set `$DOM.replaceGlobals = true;` to define/overwrite standard DOM environment globals -- `global.window`, `global.document`, `global.performance`, and `global.Event` -- with the mocked elements produced by the `$DOM(..)` call. **Warning:** This ***will break in the browser***!
+Before calling `$DOM(..)`, set `$DOM.replaceGlobals = true;` to define/overwrite standard DOM environment globals -- `global.window`, `global.document`, `global.performance`, `global.Event`, and `global.location` -- with the mocked elements produced by the `$DOM(..)` call. **Warning:** This ***will break in the browser***!
 
 The options that can be passed to `$DOM(..)`:
 
@@ -83,7 +83,9 @@ The options that can be passed to `$DOM(..)`:
 
 * `linkPreload` (`true` / `false`): Make `<link>` elements behave with the [`rel=preload` preloading capability](https://w3c.github.io/preload/). Defaults to `true`.
 
-* `baseURI` (`string`): Set the default `document.baseURI` property. Defaults to `""`.
+* `location` (`string`): Set the default `document.location`. Defaults to `"https://some.thing/else"`.
+
+* `baseURI` (`string`): Set the default `document.baseURI` property. Defaults to the value of `opts.location`.
 
 * `log` (`function`): Specify a function to receive the log messages while performing mock DOM operations. This is useful for test cases where you want to verify that all operations were performed as expected. Set to an empty function to ignore/discard log messages. Defaults to printing to the console as with `console.log(..)`.
 

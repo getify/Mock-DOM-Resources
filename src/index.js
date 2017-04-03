@@ -20,8 +20,9 @@
 		if (!("relList" in opts)) opts.relList = true;
 		if (!("scriptAsync" in opts)) opts.scriptAsync = true;
 		if (!("linkPreload" in opts)) opts.linkPreload = true;
-		if (!("baseURI" in opts)) opts.baseURI = "";
-		if (!("log" in opts)) opts.log = function log(status) { console.log( JSON.stringify( status ) ); }
+		if (!("location" in opts)) opts.location = "https://some.thing/else";
+		if (!("baseURI" in opts)) opts.baseURI = opts.location;
+		if (!("log" in opts)) opts.log = function log(status) { console.log( JSON.stringify( status ) ); };
 		if (!("error" in opts)) opts.error = function error(err) { throw err; };
 		if (!("resources" in opts)) opts.resources = [];
 		if (!("sequentialIds" in opts)) opts.sequentialIds = false;
@@ -64,6 +65,7 @@
 		var sequentialId = 0;
 		var loadQueue = [];
 		var silent = true;
+		var locObj = setupLocation( opts.location );
 
 		var documentElement = createElement( "document" );
 		documentElement.head = createElement( "head" );
@@ -73,6 +75,11 @@
 		documentElement.baseURI = opts.baseURI;
 		documentElement.createElement = createElement;
 		documentElement.createEvent = createEvent;
+		Object.defineProperty( documentElement, "location", {
+			get() { return locObj; },
+			set(val) { locObj.href = val; return val; },
+			configurable: true,
+		} );
 
 		var performanceAPI = {
 			getEntriesByName: getEntriesByName,
@@ -82,6 +89,11 @@
 		mockDOM.document = documentElement;
 		mockDOM.performance = performanceAPI;
 		mockDOM.Event = Event;
+		Object.defineProperty( mockDOM, "location", {
+			get() { return locObj; },
+			set(val) { locObj.href = val; return val; },
+			configurable: true,
+		} );
 
 		silent = false;
 
@@ -94,6 +106,11 @@
 		if (createMockDOM.replaceGlobals) {
 			global.window = mockDOM;
 			global.document = mockDOM.document;
+			Object.defineProperty( global, "location", {
+				get() { return locObj; },
+				set(val) { locObj.href = val; return val; },
+				configurable: true,
+			} );
 			global.performance = mockDOM.performance;
 			global.Event = Event;
 			createMockDOM.replaceGlobals = false;
@@ -434,4 +451,63 @@
 			}
 		}
 	}
+
+	function setupLocation(location) {
+		var loc = {
+			toString() {
+				return location;
+			},
+			get href() {
+				return location;
+			},
+			set href(val) {
+				location = val;
+				parseLocation();
+			},
+			assign: function assign(val){
+				this.href = val;
+			},
+			reload: function(){},
+			replace: function replace(val){
+				this.href = val;
+			}
+		};
+
+		loc.href = location;
+
+		return loc;
+
+
+		// *************************
+
+		function parseLocation() {
+			var locParts = parseURI( location );
+			loc.protocol = (locParts.protocol || "") + ":";
+			loc.host = locParts.host || "";
+			loc.pathname = locParts.path || "";
+			loc.port = locParts.port || "";
+			loc.host = locParts.host + (loc.port ? ":" + loc.port : "");
+			loc.hostname = locParts.host;
+			loc.hash = locParts.anchor ? "#" + locParts.anchor : "";
+			loc.search = locParts.query ? "?" + locParts.query : "";
+			loc.username = locParts.user ? locParts.user : undefined;
+			loc.password = locParts.password ? locParts.password : undefined;
+			loc.origin = loc.protocol + "//" + loc.host;
+		}
+	}
+
+	// adapted from http://blog.stevenlevithan.com/archives/parseuri
+	function parseURI(str) {
+		var	o = {
+				key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+			};
+		var m = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/.exec(str);
+		var uri = {};
+		var i = 14;
+
+		while (i--) uri[o.key[i]] = m[i] || "";
+
+		return uri;
+	};
+
 });

@@ -691,6 +691,113 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 	}
 } );
 
+QUnit.test( "location (default)", function test(assert){
+	var win = $DOM( {
+		log: function(){},
+		error: function(){},
+	} );
+
+	var rExpected = {
+		href: "https://some.thing/else",
+		protocol: "https:",
+		pathname: "/else",
+		port: "",
+		host: "some.thing",
+		hostname: "some.thing",
+		hash: "",
+		search: "",
+		origin: "https://some.thing",
+	};
+	var pExpected = "https://some.thing/else";
+	var qExpected = "https://some.thing/else";
+	var tExpected = "https://some.thing/else";
+	var sExpected = "https://some.thing/else";
+	var uExpected = "https://some.thing/else";
+
+	var rActual = JSON.parse( JSON.stringify( win.location ) );
+	var pActual = win.location.href;
+	var qActual = win.location.href.toString();
+	var tActual = win.location.toString();
+	var sActual = "" + win.location;
+	var uActual = win.document.baseURI;
+
+	assert.expect( 6 );
+	assert.deepEqual( rActual, rExpected, "location object" );
+	assert.strictEqual( pActual, pExpected, "location.href" );
+	assert.strictEqual( qActual, qExpected, "location.href.toString()" );
+	assert.strictEqual( tActual, tExpected, "location.toString()" );
+	assert.strictEqual( sActual, sExpected, "location + ''" );
+	assert.strictEqual( uActual, uExpected, "baseURI default" );
+} );
+
+QUnit.test( "location (changed)", function test(assert){
+	$DOM.replaceGlobals = true;
+	var win = $DOM( {
+		log: function(){},
+		error: function(){},
+		location: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
+		baseURI: "https://other.tld",
+	} );
+	win.location.reload();
+
+	var rExpected = {
+		href: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
+		protocol: "http:",
+		pathname: "/foo/bar",
+		port: "8080",
+		host: "some.tld:8080",
+		hostname: "some.tld",
+		hash: "#haha",
+		search: "?bam=baz",
+		origin: "http://some.tld:8080",
+		username: "user1",
+		password: "pw1",
+	};
+	var pExpected = {
+		href: "https://some.thing/better",
+		protocol: "https:",
+		pathname: "/better",
+		port: "",
+		host: "some.thing",
+		hostname: "some.thing",
+		hash: "",
+		search: "",
+		origin: "https://some.thing",
+	};
+	var qExpected = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
+	var tExpected = "https://a.tld/funny";
+	var sExpected = "http://some.tld/foo/bar";
+	var uExpected = "https://other.tld";
+	var mExpected = "https://other.tld";
+
+	var rActual = JSON.parse( JSON.stringify( win.document.location ) );
+
+	win.location = "https://some.thing/better";
+	var pActual = JSON.parse( JSON.stringify( win.location ) );
+
+	global.location = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
+	var qActual = win.location.href.toString();
+
+	document.location = "https://a.tld/funny";
+	var tActual = win.location.href.toString();
+
+	win.location.assign( "http://some.tld/foo/bar" );
+	var sActual = win.location.href.toString();
+
+	win.location.replace( "https://other.tld" );
+	var uActual = win.location.href.toString();
+	var mActual = win.document.baseURI;
+
+	assert.expect( 7 );
+	assert.deepEqual( rActual, rExpected, "location object" );
+	assert.deepEqual( pActual, pExpected, "win.location = .." );
+	assert.strictEqual( qActual, qExpected, "global.location = .." );
+	assert.strictEqual( tActual, tExpected, "document.location = .." );
+	assert.strictEqual( sActual, sExpected, "location.assign()" );
+	assert.strictEqual( uActual, uExpected, "location.replace()" );
+	assert.strictEqual( mActual, mExpected, "baseURI" );
+} );
+
 QUnit.test( "replace globals", function test(assert){
 	$DOM.replaceGlobals = true;
 	var win = $DOM( {
@@ -702,17 +809,20 @@ QUnit.test( "replace globals", function test(assert){
 	var pExpected = win.document;
 	var qExpected = win.performance;
 	var tExpected = win.Event;
+	var sExpected = win.location;
 
 	var rActual = global.window;
 	var pActual = global.document;
 	var qActual = global.performance;
 	var tActual = global.Event;
+	var sActual = global.location;
 
-	assert.expect( 4 );
+	assert.expect( 5 );
 	assert.strictEqual( rActual, rExpected, "global.window" );
 	assert.strictEqual( pActual, pExpected, "global.document" );
 	assert.strictEqual( qActual, qExpected, "global.performance" );
 	assert.strictEqual( tActual, tExpected, "global.Event" );
+	assert.strictEqual( sActual, sExpected, "global.location" );
 } );
 
 
