@@ -71,9 +71,9 @@ Failed: http://some.tld/b.css
 
 ### Options
 
-Before calling `$DOM(..)`, set `$DOM.replaceGlobals = true;` to define/overwrite standard DOM environment globals -- `global.window`, `global.document`, `global.performance`, `global.Event`, and `global.location` -- with the mocked elements produced by the `$DOM(..)` call. **Warning:** This ***will break in the browser***!
-
 The options that can be passed to `$DOM(..)`:
+
+* `replaceGlobals` (`true` / `false`): In the browser, override various globals that are typically used in resource loading, like `document.createElement(..)` and `document.head.appendChild(..)`. In node, define/replace `global.window`, `global.document`, `global.performance`, `global.Event`, and `global.location`. Defaults to `false`.
 
 * `sequentialIds` (`true` / `false`): Use strictly incrementing numeric IDs (starting with `1`) for created DOM elements. Defaults to `false` (generates random IDs).
 
@@ -140,7 +140,7 @@ node scripts/build-core.js
 
 A comprehensive test suite is included in this repository, as well as the npm package distribution.
 
-1. You can run the tests in a browser by opening up `tests/index.html` (**requires ES6+ browser environment**). **Note:** The final test (that tries to overwrite the DOM globals) fails in a browser; that's only allowed in Node. This failure is by design.
+1. You can run the tests in a browser by opening up `tests/index.html` (**requires ES6+ browser environment**).
 
 2. The included Node.js test utility (`scripts/node-tests.js`) runs the test suite. **This test utility expects Node.js version 6+.**
 

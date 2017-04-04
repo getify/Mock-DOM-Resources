@@ -1,6 +1,6 @@
 {
 	"name": "mock-dom-resources",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Utility for mocking the DOM APIs to simulate browser resource loading",
 	"main": "./src/index.js",
 	"scripts": {
@@ -15,7 +15,7 @@
 		"qunitjs": "~2.3.0",
 		"stable-timers": "~1.0.0"
 	},
-	"repository": "getify/mock-dom-resources",
+	"repository": "getify/Mock-DOM-Resources",
 	"keywords": [
 		"test",
 		"testing",
@@ -24,10 +24,10 @@
 		"resource loading"
 	],
 	"bugs": {
-		"url": "https://github.com/getify/mock-dom-resources/issues",
+		"url": "https://github.com/getify/Mock-DOM-Resources/issues",
 		"email": "getify@gmail.com"
 	},
-	"homepage": "https://github.com/getify/mock-dom-resources",
+	"homepage": "https://github.com/getify/Mock-DOM-Resources",
 	"author": "Kyle Simpson <getify@gmail.com>",
 	"license": "MIT"
 }

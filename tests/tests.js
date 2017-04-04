@@ -691,139 +691,221 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 	}
 } );
 
-QUnit.test( "location (default)", function test(assert){
-	var win = $DOM( {
-		log: function(){},
-		error: function(){},
+// probably not running in the browser?
+if (typeof window == "undefined" || Function("return this")() !== window || !window.document) {
+	QUnit.test( "location (default); non-browser", function test(assert){
+		var win = $DOM( {
+			log: function(){},
+			error: function(){},
+		} );
+
+		var rExpected = {
+			href: "https://some.thing/else",
+			protocol: "https:",
+			pathname: "/else",
+			port: "",
+			host: "some.thing",
+			hostname: "some.thing",
+			hash: "",
+			search: "",
+			origin: "https://some.thing",
+		};
+		var pExpected = "https://some.thing/else";
+		var qExpected = "https://some.thing/else";
+		var tExpected = "https://some.thing/else";
+		var sExpected = "https://some.thing/else";
+		var uExpected = "https://some.thing/else";
+
+		var rActual = JSON.parse( JSON.stringify( win.location ) );
+		var pActual = win.location.href;
+		var qActual = win.location.href.toString();
+		var tActual = win.location.toString();
+		var sActual = "" + win.location;
+		var uActual = win.document.baseURI;
+
+		assert.expect( 6 );
+		assert.deepEqual( rActual, rExpected, "location object" );
+		assert.strictEqual( pActual, pExpected, "location.href" );
+		assert.strictEqual( qActual, qExpected, "location.href.toString()" );
+		assert.strictEqual( tActual, tExpected, "location.toString()" );
+		assert.strictEqual( sActual, sExpected, "location + ''" );
+		assert.strictEqual( uActual, uExpected, "baseURI default" );
 	} );
 
-	var rExpected = {
-		href: "https://some.thing/else",
-		protocol: "https:",
-		pathname: "/else",
-		port: "",
-		host: "some.thing",
-		hostname: "some.thing",
-		hash: "",
-		search: "",
-		origin: "https://some.thing",
-	};
-	var pExpected = "https://some.thing/else";
-	var qExpected = "https://some.thing/else";
-	var tExpected = "https://some.thing/else";
-	var sExpected = "https://some.thing/else";
-	var uExpected = "https://some.thing/else";
+	QUnit.test( "location (changed); non-browser", function test(assert){
+		var win = $DOM( {
+			replaceGlobals: true,
+			log: function(){},
+			error: function(){},
+			location: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
+			baseURI: "https://other.tld",
+		} );
+		win.location.reload();
 
-	var rActual = JSON.parse( JSON.stringify( win.location ) );
-	var pActual = win.location.href;
-	var qActual = win.location.href.toString();
-	var tActual = win.location.toString();
-	var sActual = "" + win.location;
-	var uActual = win.document.baseURI;
+		var rExpected = {
+			href: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
+			protocol: "http:",
+			pathname: "/foo/bar",
+			port: "8080",
+			host: "some.tld:8080",
+			hostname: "some.tld",
+			hash: "#haha",
+			search: "?bam=baz",
+			origin: "http://some.tld:8080",
+			username: "user1",
+			password: "pw1",
+		};
+		var pExpected = {
+			href: "https://some.thing/better",
+			protocol: "https:",
+			pathname: "/better",
+			port: "",
+			host: "some.thing",
+			hostname: "some.thing",
+			hash: "",
+			search: "",
+			origin: "https://some.thing",
+		};
+		var qExpected = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
+		var tExpected = "https://a.tld/funny";
+		var sExpected = "http://some.tld/foo/bar";
+		var uExpected = "https://other.tld";
+		var mExpected = "https://other.tld";
 
-	assert.expect( 6 );
-	assert.deepEqual( rActual, rExpected, "location object" );
-	assert.strictEqual( pActual, pExpected, "location.href" );
-	assert.strictEqual( qActual, qExpected, "location.href.toString()" );
-	assert.strictEqual( tActual, tExpected, "location.toString()" );
-	assert.strictEqual( sActual, sExpected, "location + ''" );
-	assert.strictEqual( uActual, uExpected, "baseURI default" );
-} );
+		var rActual = JSON.parse( JSON.stringify( win.document.location ) );
 
-QUnit.test( "location (changed)", function test(assert){
-	$DOM.replaceGlobals = true;
-	var win = $DOM( {
-		log: function(){},
-		error: function(){},
-		location: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
-		baseURI: "https://other.tld",
-	} );
-	win.location.reload();
+		win.location = "https://some.thing/better";
+		var pActual = JSON.parse( JSON.stringify( win.location ) );
 
-	var rExpected = {
-		href: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
-		protocol: "http:",
-		pathname: "/foo/bar",
-		port: "8080",
-		host: "some.tld:8080",
-		hostname: "some.tld",
-		hash: "#haha",
-		search: "?bam=baz",
-		origin: "http://some.tld:8080",
-		username: "user1",
-		password: "pw1",
-	};
-	var pExpected = {
-		href: "https://some.thing/better",
-		protocol: "https:",
-		pathname: "/better",
-		port: "",
-		host: "some.thing",
-		hostname: "some.thing",
-		hash: "",
-		search: "",
-		origin: "https://some.thing",
-	};
-	var qExpected = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
-	var tExpected = "https://a.tld/funny";
-	var sExpected = "http://some.tld/foo/bar";
-	var uExpected = "https://other.tld";
-	var mExpected = "https://other.tld";
+		global.location = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
+		var qActual = win.location.href.toString();
 
-	var rActual = JSON.parse( JSON.stringify( win.document.location ) );
+		document.location = "https://a.tld/funny";
+		var tActual = win.location.href.toString();
 
-	win.location = "https://some.thing/better";
-	var pActual = JSON.parse( JSON.stringify( win.location ) );
+		win.location.assign( "http://some.tld/foo/bar" );
+		var sActual = win.location.href.toString();
 
-	global.location = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
-	var qActual = win.location.href.toString();
+		win.location.replace( "https://other.tld" );
+		var uActual = win.location.href.toString();
+		var mActual = win.document.baseURI;
 
-	document.location = "https://a.tld/funny";
-	var tActual = win.location.href.toString();
-
-	win.location.assign( "http://some.tld/foo/bar" );
-	var sActual = win.location.href.toString();
-
-	win.location.replace( "https://other.tld" );
-	var uActual = win.location.href.toString();
-	var mActual = win.document.baseURI;
-
-	assert.expect( 7 );
-	assert.deepEqual( rActual, rExpected, "location object" );
-	assert.deepEqual( pActual, pExpected, "win.location = .." );
-	assert.strictEqual( qActual, qExpected, "global.location = .." );
-	assert.strictEqual( tActual, tExpected, "document.location = .." );
-	assert.strictEqual( sActual, sExpected, "location.assign()" );
-	assert.strictEqual( uActual, uExpected, "location.replace()" );
-	assert.strictEqual( mActual, mExpected, "baseURI" );
-} );
-
-QUnit.test( "replace globals", function test(assert){
-	$DOM.replaceGlobals = true;
-	var win = $DOM( {
-		log: function(){},
-		error: function(){},
+		assert.expect( 7 );
+		assert.deepEqual( rActual, rExpected, "location object" );
+		assert.deepEqual( pActual, pExpected, "win.location = .." );
+		assert.strictEqual( qActual, qExpected, "global.location = .." );
+		assert.strictEqual( tActual, tExpected, "document.location = .." );
+		assert.strictEqual( sActual, sExpected, "location.assign()" );
+		assert.strictEqual( uActual, uExpected, "location.replace()" );
+		assert.strictEqual( mActual, mExpected, "baseURI" );
 	} );
 
-	var rExpected = win;
-	var pExpected = win.document;
-	var qExpected = win.performance;
-	var tExpected = win.Event;
-	var sExpected = win.location;
+	QUnit.test( "replace globals; non-browser", function test(assert){
+		var globalObj = typeof global != "undefined" ? global : Function("return this")();
+		var win = $DOM( {
+			replaceGlobals: true,
+			log: function(){},
+			error: function(){},
+		} );
 
-	var rActual = global.window;
-	var pActual = global.document;
-	var qActual = global.performance;
-	var tActual = global.Event;
-	var sActual = global.location;
+		var rExpected = win;
+		var pExpected = win.document;
+		var qExpected = win.performance;
+		var tExpected = win.Event;
+		var sExpected = win.location;
 
-	assert.expect( 5 );
-	assert.strictEqual( rActual, rExpected, "global.window" );
-	assert.strictEqual( pActual, pExpected, "global.document" );
-	assert.strictEqual( qActual, qExpected, "global.performance" );
-	assert.strictEqual( tActual, tExpected, "global.Event" );
-	assert.strictEqual( sActual, sExpected, "global.location" );
-} );
+		var rActual = globalObj.window;
+		var pActual = globalObj.document;
+		var qActual = globalObj.performance;
+		var tActual = globalObj.Event;
+		var sActual = globalObj.location;
+
+		assert.expect( 5 );
+		assert.strictEqual( rActual, rExpected, "global.window" );
+		assert.strictEqual( pActual, pExpected, "global.document" );
+		assert.strictEqual( qActual, qExpected, "global.performance" );
+		assert.strictEqual( tActual, tExpected, "global.Event" );
+		assert.strictEqual( sActual, sExpected, "global.location" );
+	} );
+}
+// otherwise, probably running in the browser
+else {
+	QUnit.test( "replace globals; browser", function test(assert){
+		var originals = [
+			window.document.createElement,
+			window.document.createEvent,
+			window.document.appendChild,
+			window.document.removeChild,
+			window.document.getElementsByTagName,
+			window.document.head.appendChild,
+			window.document.head.removeChild,
+			window.document.head.getElementsByTagName,
+			window.document.body.appendChild,
+			window.document.body.removeChild,
+			window.document.body.getElementsByTagName,
+			window.performance.getEntriesByName,
+			window.Event,
+		];
+
+		var win = $DOM( {
+			replaceGlobals: true,
+			log: function(){},
+			error: function(){},
+		} );
+
+		var rExpected = [
+			win.document.createElement,
+			win.document.createEvent,
+			win.document.appendChild,
+			win.document.removeChild,
+			win.document.getElementsByTagName,
+			win.document.head.appendChild,
+			win.document.head.removeChild,
+			win.document.head.getElementsByTagName,
+			win.document.body.appendChild,
+			win.document.body.removeChild,
+			win.document.body.getElementsByTagName,
+			win.performance.getEntriesByName,
+			win.Event,
+		];
+
+		var rActual = [
+			window.document.createElement,
+			window.document.createEvent,
+			window.document.appendChild,
+			window.document.removeChild,
+			window.document.getElementsByTagName,
+			window.document.head.appendChild,
+			window.document.head.removeChild,
+			window.document.head.getElementsByTagName,
+			window.document.body.appendChild,
+			window.document.body.removeChild,
+			window.document.body.getElementsByTagName,
+			window.performance.getEntriesByName,
+			window.Event,
+		];
+
+		// restore originals
+		[
+			window.document.createElement,
+			window.document.createEvent,
+			window.document.appendChild,
+			window.document.removeChild,
+			window.document.getElementsByTagName,
+			window.document.head.appendChild,
+			window.document.head.removeChild,
+			window.document.head.getElementsByTagName,
+			window.document.body.appendChild,
+			window.document.body.removeChild,
+			window.document.body.getElementsByTagName,
+			window.performance.getEntriesByName,
+			window.Event,
+		] = originals;
+
+		assert.expect( 1 );
+		assert.deepEqual( rActual, rExpected, "affected globals" );
+	} );
+}
 
 
 

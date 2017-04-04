@@ -7,9 +7,6 @@
 
 	var global = Function("return this")();
 
-	// default to not overwriting by default
-	createMockDOM.replaceGlobals = false;
-
 	return createMockDOM;
 
 
@@ -17,6 +14,7 @@
 
 	function createMockDOM(opts) {
 		opts = opts ? Object.assign( {}, opts ) : {};
+		if (!("replaceGlobals" in opts)) opts.replaceGlobals = false;
 		if (!("relList" in opts)) opts.relList = true;
 		if (!("scriptAsync" in opts)) opts.scriptAsync = true;
 		if (!("linkPreload" in opts)) opts.linkPreload = true;
@@ -97,22 +95,52 @@
 
 		silent = false;
 
+		// hard-bind "global" DOM element methods
+		documentElement.appendChild = documentElement.appendChild.bind( documentElement );
+		documentElement.removeChild = documentElement.removeChild.bind( documentElement );
+		documentElement.getElementsByTagName = documentElement.getElementsByTagName.bind( documentElement );
+		documentElement.head.appendChild = documentElement.head.appendChild.bind( documentElement.head );
+		documentElement.head.removeChild = documentElement.head.removeChild.bind( documentElement.head );
+		documentElement.head.getElementsByTagName = documentElement.head.getElementsByTagName.bind( documentElement.head );
+		documentElement.body.appendChild = documentElement.body.appendChild.bind( documentElement.body );
+		documentElement.body.removeChild = documentElement.body.removeChild.bind( documentElement.body );
+		documentElement.body.getElementsByTagName = documentElement.body.getElementsByTagName.bind( documentElement.body );
+
 		// notify: internal IDs for built-ins
 		opts.log( {window: mockDOM._internal_id} );
 		opts.log( {document: documentElement._internal_id} );
 		opts.log( {head: documentElement.head._internal_id} );
 		opts.log( {body: documentElement.body._internal_id} );
 
-		if (createMockDOM.replaceGlobals) {
-			global.window = mockDOM;
-			global.document = mockDOM.document;
-			Object.defineProperty( global, "location", {
-				get() { return locObj; },
-				set(val) { locObj.href = val; return val; },
-				configurable: true,
-			} );
-			global.performance = mockDOM.performance;
-			global.Event = Event;
+		if (opts.replaceGlobals) {
+			// probably running in the browser?
+			/* istanbul ignore next */if (typeof window != "undefined" && global === window && window.document) {
+				/* istanbul ignore next */try { window.document.createElement = createElement; } catch (err) {}
+				/* istanbul ignore next */try { window.document.createEvent = createEvent; } catch (err) {}
+				/* istanbul ignore next */try { window.document.appendChild = documentElement.appendChild; } catch (err) {}
+				/* istanbul ignore next */try { window.document.removeChild = documentElement.removeChild; } catch (err) {}
+				/* istanbul ignore next */try { window.document.getElementsByTagName = documentElement.getElementsByTagName; } catch (err) {}
+				/* istanbul ignore next */try { window.document.head.appendChild = documentElement.head.appendChild; } catch (err) {}
+				/* istanbul ignore next */try { window.document.head.removeChild = documentElement.head.removeChild; } catch (err) {}
+				/* istanbul ignore next */try { window.document.head.getElementsByTagName = documentElement.head.getElementsByTagName; } catch (err) {}
+				/* istanbul ignore next */try { window.document.body.appendChild = documentElement.body.appendChild; } catch (err) {}
+				/* istanbul ignore next */try { window.document.body.removeChild = documentElement.body.removeChild; } catch (err) {}
+				/* istanbul ignore next */try { window.document.body.getElementsByTagName = documentElement.body.getElementsByTagName; } catch (err) {}
+				/* istanbul ignore next */try { global.performance.getEntriesByName = mockDOM.performance.getEntriesByName; } catch (err) {}
+				/* istanbul ignore next */try { global.Event = Event; } catch (err) {}
+			}
+			// otherwise, assume an environment like Node
+			else {
+				global.window = mockDOM;
+				global.document = mockDOM.document;
+				Object.defineProperty( global, "location", {
+					get() { return locObj; },
+					set(val) { locObj.href = val; return val; },
+					configurable: true,
+				} );
+				global.performance = mockDOM.performance;
+				global.Event = Event;
+			}
 			createMockDOM.replaceGlobals = false;
 		}
 
