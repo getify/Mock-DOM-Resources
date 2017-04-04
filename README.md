@@ -73,7 +73,7 @@ Failed: http://some.tld/b.css
 
 The options that can be passed to `$DOM(..)`:
 
-* `replaceGlobals` (`true` / `false`): In the browser, override various globals that are typically used in resource loading, like `document.createElement(..)` and `document.head.appendChild(..)`. In node, define/replace `global.window`, `global.document`, `global.performance`, `global.Event`, and `global.location`. Defaults to `false`.
+* `replaceGlobals` (`true` / `false`): In the browser, override various globals that are typically used in resource loading, like `document.createElement(..)` and `document.head.appendChild(..)`. In node, define/replace `global.window`, `global.document`, `global.performance`, `global.Event`, and `global.location`. Call `$DOM.restoreGlobals()` to reset them. Defaults to `false`.
 
 * `sequentialIds` (`true` / `false`): Use strictly incrementing numeric IDs (starting with `1`) for created DOM elements. Defaults to `false` (generates random IDs).
 

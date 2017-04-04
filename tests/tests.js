@@ -790,6 +790,8 @@ if (typeof window == "undefined" || Function("return this")() !== window || !win
 		var uActual = win.location.href.toString();
 		var mActual = win.document.baseURI;
 
+		$DOM.restoreGlobals();
+
 		assert.expect( 7 );
 		assert.deepEqual( rActual, rExpected, "location object" );
 		assert.deepEqual( pActual, pExpected, "win.location = .." );
@@ -800,38 +802,58 @@ if (typeof window == "undefined" || Function("return this")() !== window || !win
 		assert.strictEqual( mActual, mExpected, "baseURI" );
 	} );
 
-	QUnit.test( "replace globals; non-browser", function test(assert){
+	QUnit.test( "replace and restore globals; non-browser", function test(assert){
 		var globalObj = typeof global != "undefined" ? global : Function("return this")();
+
+		var pExpected = [
+			globalObj.window,
+			globalObj.document,
+			globalObj.performance,
+			globalObj.Event,
+			globalObj.location,
+		];
+
 		var win = $DOM( {
 			replaceGlobals: true,
 			log: function(){},
 			error: function(){},
 		} );
 
-		var rExpected = win;
-		var pExpected = win.document;
-		var qExpected = win.performance;
-		var tExpected = win.Event;
-		var sExpected = win.location;
+		var rExpected = [
+			win,
+			win.document,
+			win.performance,
+			win.Event,
+			win.location,
+		];
 
-		var rActual = globalObj.window;
-		var pActual = globalObj.document;
-		var qActual = globalObj.performance;
-		var tActual = globalObj.Event;
-		var sActual = globalObj.location;
+		var rActual = [
+			globalObj.window,
+			globalObj.document,
+			globalObj.performance,
+			globalObj.Event,
+			globalObj.location,
+		];
 
-		assert.expect( 5 );
-		assert.strictEqual( rActual, rExpected, "global.window" );
-		assert.strictEqual( pActual, pExpected, "global.document" );
-		assert.strictEqual( qActual, qExpected, "global.performance" );
-		assert.strictEqual( tActual, tExpected, "global.Event" );
-		assert.strictEqual( sActual, sExpected, "global.location" );
+		$DOM.restoreGlobals();
+
+		var pActual = [
+			globalObj.window,
+			globalObj.document,
+			globalObj.performance,
+			globalObj.Event,
+			globalObj.location,
+		];
+
+		assert.expect( 2 );
+		assert.deepEqual( rActual, rExpected, "replaced globals" );
+		assert.deepEqual( pActual, pExpected, "restored globals" );
 	} );
 }
 // otherwise, probably running in the browser
 else {
-	QUnit.test( "replace globals; browser", function test(assert){
-		var originals = [
+	QUnit.test( "replace and restore globals; browser", function test(assert){
+		var pExpected = [
 			window.document.createElement,
 			window.document.createEvent,
 			window.document.appendChild,
@@ -885,8 +907,10 @@ else {
 			window.Event,
 		];
 
-		// restore originals
-		[
+		// restore original globals
+		$DOM.restoreGlobals();
+
+		var pActual = [
 			window.document.createElement,
 			window.document.createEvent,
 			window.document.appendChild,
@@ -900,10 +924,11 @@ else {
 			window.document.body.getElementsByTagName,
 			window.performance.getEntriesByName,
 			window.Event,
-		] = originals;
+		];
 
-		assert.expect( 1 );
-		assert.deepEqual( rActual, rExpected, "affected globals" );
+		assert.expect( 2 );
+		assert.deepEqual( rActual, rExpected, "replaced globals" );
+		assert.deepEqual( pActual, pExpected, "restored globals" );
 	} );
 }
 

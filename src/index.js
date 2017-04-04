@@ -7,6 +7,37 @@
 
 	var global = Function("return this")();
 
+	// probably running in the browser?
+	/* istanbul ignore next */if (typeof window != "undefined" && global === window && window.document) {
+		/* istanbul ignore next */var originalGlobals = [
+			window.document.createElement,
+			window.document.createEvent,
+			window.document.appendChild,
+			window.document.removeChild,
+			window.document.getElementsByTagName,
+			window.document.head.appendChild,
+			window.document.head.removeChild,
+			window.document.head.getElementsByTagName,
+			window.document.body.appendChild,
+			window.document.body.removeChild,
+			window.document.body.getElementsByTagName,
+			global.performance.getEntriesByName,
+			global.Event,
+		];
+	}
+	// otherwise, assume an environment like Node
+	else {
+		var originalGlobals = [
+			global.window,
+			global.document,
+			global.location,
+			global.performance,
+			global.Event,
+		];
+	}
+
+	createMockDOM.restoreGlobals = restoreGlobals;
+
 	return createMockDOM;
 
 
@@ -536,6 +567,33 @@
 		while (i--) uri[o.key[i]] = m[i] || "";
 
 		return uri;
-	};
+	}
 
+	function restoreGlobals() {
+		/* istanbul ignore next */if (typeof window != "undefined" && global === window && window.document) {
+			/* istanbul ignore next */window.document.createElement = originalGlobals[0];
+			/* istanbul ignore next */window.document.createEvent = originalGlobals[1];
+			/* istanbul ignore next */window.document.appendChild = originalGlobals[2];
+			/* istanbul ignore next */window.document.removeChild = originalGlobals[3];
+			/* istanbul ignore next */window.document.getElementsByTagName = originalGlobals[4];
+			/* istanbul ignore next */window.document.head.appendChild = originalGlobals[5];
+			/* istanbul ignore next */window.document.head.removeChild = originalGlobals[6];
+			/* istanbul ignore next */window.document.head.getElementsByTagName = originalGlobals[7];
+			/* istanbul ignore next */window.document.body.appendChild = originalGlobals[8];
+			/* istanbul ignore next */window.document.body.removeChild = originalGlobals[9];
+			/* istanbul ignore next */window.document.body.getElementsByTagName = originalGlobals[10];
+			/* istanbul ignore next */global.performance.getEntriesByName = originalGlobals[11];
+			/* istanbul ignore next */global.Event = originalGlobals[12];
+		}
+		else {
+			global.window = originalGlobals[0];
+			global.document = originalGlobals[1];
+			Object.defineProperty( global, "location", {
+				configurable: true,
+				value: originalGlobals[2],
+			} );
+			global.performance = originalGlobals[3];
+			global.Event = originalGlobals[4];
+		}
+	}
 });

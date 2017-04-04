@@ -1,6 +1,6 @@
 {
 	"name": "mock-dom-resources",
-	"version": "6.0.0",
+	"version": "7.0.0",
 	"description": "Utility for mocking the DOM APIs to simulate browser resource loading",
 	"main": "./src/index.js",
 	"scripts": {
