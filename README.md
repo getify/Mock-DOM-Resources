@@ -69,6 +69,35 @@ Failed: http://some.tld/b.css
 
 `window.performance` has only the `getEntriesByName(..)` method, which takes a URL and returns an array (of only that URL) if that resource URL has been loaded already, false if not.
 
+### DOM Features Provided
+
+The following subset of DOM features are mocked:
+
+* `window`
+* `window.onload`
+* `window.Event`
+* `window.document` (and `document`)
+* `window` event: `load`
+* `document.location` (and `window.location` and `location`)
+* `document.baseURI`
+* `document.head`
+* `document.body`
+* `document.createElement(..)`
+* `document.readyState`
+* `document` event: `DOMContentLoaded`
+* DOM `Element`s:
+	- `appendChild(..)`
+	- `removeChild(..)`
+	- `setAttribute(..)`
+	- `getAttribute(..)`
+	- `addEventListener(..)`
+	- `removeEventListener(..)`
+	- `dispatchEvent(..)`
+	- `getElementsByTagName(..)`
+	- event: `load`
+	- event: `error`
+* `window.performance.getEntriesByName(..)`
+
 ### Options
 
 The options that can be passed to `$DOM(..)`:
@@ -76,6 +105,10 @@ The options that can be passed to `$DOM(..)`:
 * `replaceGlobals` (`true` / `false`): In the browser, override various globals that are typically used in resource loading, like `document.createElement(..)` and `document.head.appendChild(..)`. In node, define/replace `global.window`, `global.document`, `global.performance`, `global.Event`, and `global.location`. Call `$DOM.restoreGlobals()` to reset them. Defaults to `false`.
 
 * `sequentialIds` (`true` / `false`): Use strictly incrementing numeric IDs (starting with `1`) for created DOM elements. Defaults to `false` (generates random IDs).
+
+* `docReadyState` (`"loading"` / `"interactive"` / `"complete"`): Manually sets the initial state of `document.readyState`. If `"loading"`, the state will emulate transition to `"interactive"` and then `"complete"`. If `"interactive"`, the state will emulate transition to `"complete"`. When the `readyState` transitions to `"interactive"`, the `DOMContentLoaded` event (commonly known as "DOM ready") will be dispatched on `document`. When the `readyState` transitions to `"complete"`, the `load` event (commonly known as `window.onload`) will be dispatched on the DOM instance (aka `window`). Defaults to `"loading"`.
+
+* `docReadyDelay` (`number`): The delay in milliseconds to use between transitions of `document.readyState`. Defaults to `1`.
 
 * `relList` (`true` / `false`): Mock the [`relList` mechanism](http://caniuse.com/#search=relList) on DOM elements, including [`relList.supports(..)`](https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/supports). Defaults to `true`.
 

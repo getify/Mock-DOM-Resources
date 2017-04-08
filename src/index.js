@@ -5,7 +5,7 @@
 })("$DOM",this,function DEF(name,context){
 	"use strict";
 
-	var global = Function("return this")();
+	var global = Function( "return this" )();
 
 	// probably running in the browser?
 	/* istanbul ignore next */if (typeof window != "undefined" && global === window && window.document) {
@@ -44,17 +44,30 @@
 	// **************************************
 
 	function createMockDOM(opts) {
-		opts = opts ? Object.assign( {}, opts ) : {};
+		/* istanbul ignore next */opts = opts ? Object.assign( {}, opts ) : {};
 		if (!("replaceGlobals" in opts)) opts.replaceGlobals = false;
 		if (!("relList" in opts)) opts.relList = true;
 		if (!("scriptAsync" in opts)) opts.scriptAsync = true;
 		if (!("linkPreload" in opts)) opts.linkPreload = true;
+		if (!("docReadyState" in opts)) opts.docReadyState = "loading";
+		if (!("docReadyDelay" in opts)) opts.docReadyDelay = 1;
 		if (!("location" in opts)) opts.location = "https://some.thing/else";
 		if (!("baseURI" in opts)) opts.baseURI = opts.location;
-		if (!("log" in opts)) opts.log = function log(status) { console.log( JSON.stringify( status ) ); };
-		if (!("error" in opts)) opts.error = function error(err) { throw err; };
+		/* istanbul ignore next */if (!("log" in opts)) opts.log = function log(status) { console.log( JSON.stringify( status ) ); };
+		/* istanbul ignore next */if (!("error" in opts)) opts.error = function error(err) { throw err; };
 		if (!("resources" in opts)) opts.resources = [];
 		if (!("sequentialIds" in opts)) opts.sequentialIds = false;
+
+		if (!/^(?:loading|interactive|complete)$/.test( String( opts.docReadyState ) )) {
+			opts.docReadyState = "loading";
+		}
+
+		// emulate document.readyState (DOMContentLoaded and window.load)
+		opts.docReadyDelay = Math.max( 0, Number( opts.docReadyDelay ) || 0 );
+		var docReadyState = opts.docReadyState;
+		if (docReadyState != "complete") {
+			setTimeout( advanceReadyState, opts.docReadyDelay );
+		}
 
 		// copy resources list and normalize its entries
 		opts.resources = opts.resources.map(function fix(resource){
@@ -96,12 +109,20 @@
 		var silent = true;
 		var locObj = setupLocation( opts.location );
 
+		// create the initial DOM elements
+		var mockDOM = createElement( "window" );
 		var documentElement = createElement( "document" );
 		documentElement.head = createElement( "head" );
 		documentElement.body = createElement( "body" );
+
 		documentElement.appendChild( documentElement.head );
 		documentElement.appendChild( documentElement.body );
 		documentElement.baseURI = opts.baseURI;
+		Object.defineProperty( documentElement, "readyState", {
+			get() { return docReadyState; },
+			set(val) { return val; },
+			configurable: false,
+		} );
 		documentElement.createElement = createElement;
 		documentElement.createEvent = createEvent;
 		Object.defineProperty( documentElement, "location", {
@@ -114,7 +135,6 @@
 			getEntriesByName: getEntriesByName,
 		};
 
-		var mockDOM = createElement( "window" );
 		mockDOM.document = documentElement;
 		mockDOM.performance = performanceAPI;
 		mockDOM.Event = Event;
@@ -280,9 +300,9 @@
 			var idx = this.childNodes.indexOf( childElement );
 			if (idx != -1) {
 				this.childNodes.splice( idx, 1 );
+				filterTagNameNodeLists( childElement );
+				childElement.parentNode = null;
 			}
-			filterTagNameNodeLists( childElement );
-			childElement.parentNode = null;
 
 			return childElement;
 		}
@@ -334,6 +354,11 @@
 				for (var i = 0; i < evtHandlers.length; i++) {
 					try { evtHandlers[i].call( this, evt ); } catch (err) {}
 				}
+			}
+
+			// manually fire `window.onload` handler?
+			if (evt.target === mockDOM && evt.type === "load" && typeof mockDOM.onload == "function") {
+				mockDOM.onload.call( this, evt );
 			}
 		}
 
@@ -452,10 +477,10 @@
 			this.timestamp = Date.now();
 			this.isTrusted = true;
 			this.eventPhase = 2; // Event.AT_TARGET
-			this.preventDefault = function(){ this.defaultPrevented = true; };
-			this.stopPropagation = function(){};
-			this.stopImmediatePropagation = function(){};
-			this.initEvent = function(type,bubbles,cancelable){
+			this.preventDefault = function preventDefault(){ this.defaultPrevented = true; };
+			this.stopPropagation = function stopPropagation(){};
+			this.stopImmediatePropagation = function stopImmediatePropagation(){};
+			this.initEvent = function initEvent(type,bubbles,cancelable){
 				this.type = this.name = type;
 				this.bubbles = bubbles;
 				this.cancelable = cancelable;
@@ -509,6 +534,21 @@
 				performanceEntries.push( url );
 			}
 		}
+
+		function advanceReadyState(){
+			if (docReadyState == "loading") {
+				docReadyState = "interactive";
+				var evt = new Event( "DOMContentLoaded" );
+				documentElement.dispatchEvent( evt );
+				setTimeout( advanceReadyState, opts.docReadyDelay );
+			}
+			// otherwise, must be "interactive"
+			else {
+				docReadyState = "complete";
+				var evt = new Event( "load" );
+				mockDOM.dispatchEvent( evt );
+			}
+		}
 	}
 
 	function setupLocation(location) {
@@ -526,7 +566,7 @@
 			assign: function assign(val){
 				this.href = val;
 			},
-			reload: function(){},
+			reload: function reload(){},
 			replace: function replace(val){
 				this.href = val;
 			}
