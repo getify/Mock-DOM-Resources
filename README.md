@@ -94,7 +94,7 @@ The options that can be passed to `$DOM(..)`:
 * `resources` (`array`): Specify the resources that should be available for the mock DOM to pretend to load. Each entry in this array is an object including the following specifiers:
 
 	- `url` (required): the exact URL that the resource loading request should match. **Note:** no normalization is done on either these URLs or those requested by mock DOM elements.
-	- `loaded` (optional): boolean that controls if the resource is treated as if it was already fully loaded (into the "cache") before any of the DOM processing occurs. Also adds an entry to be exposed by `window.performance.getEntriesByName(..)`. Overrides `preloadDelay`, `preload`, `loadDelay`, and `loaded` specifiers for that resource entry.
+	- `cached` (optional): boolean that controls if the resource is treated as if it was already fully loaded into the "cache" before any of the DOM processing occurs. Also adds an entry to be exposed by `window.performance.getEntriesByName(..)`. Overrides `preloadDelay`, `preload`, `loadDelay`, and `load` specifiers for that resource entry.
 	- `preloadDelay` (optional): integer of milliseconds to emulate as delay for preloading the element (with `<link rel=preload>` functionality).
 	- `preload` (optional): boolean that indicates if the preload should be complete successfully (`true`) or as a loading error (`false`).
 	- `loadDelay` (optional): integer of milliseconds to emulate as delay for loading the element (with a `<link>`, `<script>`, or `<img>` element).

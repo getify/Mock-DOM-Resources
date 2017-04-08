@@ -59,7 +59,7 @@
 		// copy resources list and normalize its entries
 		opts.resources = opts.resources.map(function fix(resource){
 			var newEntry = { url: resource.url };
-			if (resource.loaded === true) {
+			if (resource.cached === true) {
 				newEntry.loaded = true;
 				newEntry.preload = true;
 				newEntry.preloadDelay = 0;

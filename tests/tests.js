@@ -68,7 +68,7 @@ QUnit.test( "build DOM", function test(assert){
 	assert.strictEqual( sActual, sExpected, "(no) a elements" );
 } );
 
-QUnit.test( "check already loaded resource", function test(assert){
+QUnit.test( "check already cached resource", function test(assert){
 	assert.expect( 2 );
 
 	var win = $DOM( {
@@ -76,7 +76,7 @@ QUnit.test( "check already loaded resource", function test(assert){
 		log: function(){},
 		error: function(){},
 		resources: [
-			{ url: "a.js", loaded: true },
+			{ url: "a.js", cached: true },
 		],
 	} );
 
