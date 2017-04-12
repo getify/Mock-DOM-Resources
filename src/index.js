@@ -52,7 +52,6 @@
 		if (!("docReadyState" in opts)) opts.docReadyState = "loading";
 		if (!("docReadyDelay" in opts)) opts.docReadyDelay = 1;
 		if (!("location" in opts)) opts.location = "https://some.thing/else";
-		if (!("baseURI" in opts)) opts.baseURI = opts.location;
 		/* istanbul ignore next */if (!("log" in opts)) opts.log = function log(status) { console.log( JSON.stringify( status ) ); };
 		/* istanbul ignore next */if (!("error" in opts)) opts.error = function error(err) { throw err; };
 		if (!("resources" in opts)) opts.resources = [];
@@ -63,7 +62,7 @@
 		}
 
 		// emulate document.readyState (DOMContentLoaded and window.load)
-		opts.docReadyDelay = Math.max( 0, Number( opts.docReadyDelay ) || 0 );
+		opts.docReadyDelay = Math.max( 0, Number( opts.docReadyDelay ) || 5 );
 		var docReadyState = opts.docReadyState;
 		if (docReadyState != "complete") {
 			setTimeout( advanceReadyState, opts.docReadyDelay );
@@ -75,15 +74,17 @@
 			if (resource.cached === true) {
 				newEntry.loaded = true;
 				newEntry.preload = true;
-				newEntry.preloadDelay = 0;
+				newEntry.preloadDelay = 1;
 				newEntry.load = true;
-				newEntry.loadDelay = 0;
+				newEntry.loadDelay = 1;
 			}
 			else {
 				if ("preload" in resource) newEntry.preload = resource.preload;
-				if ("preloadDelay" in resource) newEntry.preloadDelay = resource.preloadDelay;
+				if ("preloadDelay" in resource) newEntry.preloadDelay = Math.max( Number( resource.preloadDelay ) || 10, 1 );
+				else newEntry.preloadDelay = 10;
 				if ("load" in resource) newEntry.load = resource.load;
-				if ("loadDelay" in resource) newEntry.loadDelay = resource.loadDelay;
+				if ("loadDelay" in resource) newEntry.loadDelay = Math.max( Number( resource.loadDelay ) || 10, 1 );
+				else newEntry.loadDelay = 10;
 			}
 			return newEntry;
 		} );
@@ -117,7 +118,7 @@
 
 		documentElement.appendChild( documentElement.head );
 		documentElement.appendChild( documentElement.body );
-		documentElement.baseURI = opts.baseURI;
+		documentElement.baseURI = opts.location;
 		Object.defineProperty( documentElement, "readyState", {
 			get() { return docReadyState; },
 			set(val) { return val; },
@@ -440,7 +441,7 @@
 				addPerformanceEntry( resource.url );
 
 				element.dispatchEvent( evt );
-			}, resource.preloadDelay || 0 );
+			}, resource.preloadDelay );
 		}
 
 		function fakeLoad(resource,element) {
@@ -461,7 +462,7 @@
 				}
 
 				addPerformanceEntry( resource.url );
-			}, resource.loadDelay || 0 );
+			}, resource.loadDelay );
 		}
 
 		function Event(type) {
@@ -493,7 +494,6 @@
 
 		// ensures load event order (queue) for ordered-async
 		function updateLoadQueue(url,element,evt) {
-			var found = false;
 			var dispatchReady = true;
 			var idx = 0;
 
@@ -502,7 +502,6 @@
 				if (loadQueue[idx].url == url && loadQueue[idx].element == element) {
 					opts.log( {updateLoadQueue: url, internal_id: element._internal_id} );
 					loadQueue[idx].evt = evt;
-					found = true;
 				}
 
 				if (dispatchReady) {
@@ -522,10 +521,6 @@
 				else {
 					idx++;
 				}
-			}
-
-			if (!found) {
-				opts.error( new Error( "updateLoadQueue: Entry not found (" + url + "; " + element._internal_id + ")" ) );
 			}
 		}
 

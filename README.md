@@ -108,7 +108,7 @@ The options that can be passed to `$DOM(..)`:
 
 * `docReadyState` (`"loading"` / `"interactive"` / `"complete"`): Manually sets the initial state of `document.readyState`. If `"loading"`, the state will emulate transition to `"interactive"` and then `"complete"`. If `"interactive"`, the state will emulate transition to `"complete"`. When the `readyState` transitions to `"interactive"`, the `DOMContentLoaded` event (commonly known as "DOM ready") will be dispatched on `document`. When the `readyState` transitions to `"complete"`, the `load` event (commonly known as `window.onload`) will be dispatched on the DOM instance (aka `window`). Defaults to `"loading"`.
 
-* `docReadyDelay` (`number`): The delay in milliseconds to use between transitions of `document.readyState`. Defaults to `1`.
+* `docReadyDelay` (`number`): The delay in milliseconds to use between transitions of `document.readyState`. Defaults to `5`.
 
 * `relList` (`true` / `false`): Mock the [`relList` mechanism](http://caniuse.com/#search=relList) on DOM elements, including [`relList.supports(..)`](https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/supports). Defaults to `true`.
 
@@ -128,9 +128,9 @@ The options that can be passed to `$DOM(..)`:
 
 	- `url` (required): the exact URL that the resource loading request should match. **Note:** no normalization is done on either these URLs or those requested by mock DOM elements.
 	- `cached` (optional): boolean that controls if the resource is treated as if it was already fully loaded into the "cache" before any of the DOM processing occurs. Also adds an entry to be exposed by `window.performance.getEntriesByName(..)`. Overrides `preloadDelay`, `preload`, `loadDelay`, and `load` specifiers for that resource entry.
-	- `preloadDelay` (optional): integer of milliseconds to emulate as delay for preloading the element (with `<link rel=preload>` functionality).
+	- `preloadDelay` (optional): integer of milliseconds to emulate as delay for preloading the element (with `<link rel=preload>` functionality). If provided, must be greater than `0`; otherwise, defaults to `10`.
 	- `preload` (optional): boolean that indicates if the preload should be complete successfully (`true`) or as a loading error (`false`).
-	- `loadDelay` (optional): integer of milliseconds to emulate as delay for loading the element (with a `<link>`, `<script>`, or `<img>` element).
+	- `loadDelay` (optional): integer of milliseconds to emulate as delay for loading the element (with a `<link>`, `<script>`, or `<img>` element). If provided, must be greater than `0`; otherwise, defaults to `10`.
 	- `load` (optional): boolean that indicates if the load should complete successfully (`true`) or as a loading error (`false`).
 
 ## Using with Node.js

@@ -265,8 +265,8 @@ QUnit.test( "load a script", function test(assert){
 		{ addEventListener: "load", internal_id: 5, },
 		{ appendChild: 5, internal_id: HEAD_ID, },
 		{ dispatchEvent: "DOMContentLoaded", internal_id: DOCUMENT_ID, },
-		{ dispatchEvent: "load", internal_id: 5, },
 		{ dispatchEvent: "load", internal_id: WINDOW_ID, },
+		{ dispatchEvent: "load", internal_id: 5, },
 	];
 
 	var { logs: rActual, log, error, } = collectLogs();
@@ -276,18 +276,18 @@ QUnit.test( "load a script", function test(assert){
 		log,
 		error,
 		resources: [
-			{ url: "a.js", load: true, },
+			{ url: "a.js", load: true, loadDelay: "invalid" },
 		],
 	} );
 
-	win.onload = function onload(){
-		assert.deepEqual( rActual, rExpected, "logs" );
-		done();
-	};
+	win.onload = done;
 
 	var script = win.document.createElement( "script" );
 	script.setAttribute( "src", "a.js" );
-	script.addEventListener( "load", done );
+	script.addEventListener( "load", function onload(){
+		assert.deepEqual( rActual, rExpected, "logs" );
+		done();
+	} );
 	win.document.head.appendChild( script );
 } );
 
@@ -302,15 +302,12 @@ QUnit.test( "load multiple scripts (ordered async)", function test(assert){
 		{ body: BODY_ID, },
 		{ createElement: "script", internal_id: 5, },
 		{ setAttribute: "src | a.js", internal_id: 5, },
-		{ setAttribute: "async | false", internal_id: 5, },
 		{ addEventListener: "load", internal_id: 5, },
 		{ createElement: "script", internal_id: 6, },
 		{ setAttribute: "src | b.js", internal_id: 6, },
-		{ setAttribute: "async | false", internal_id: 6, },
 		{ addEventListener: "load", internal_id: 6, },
 		{ createElement: "script", internal_id: 7, },
 		{ setAttribute: "src | c.js", internal_id: 7, },
-		{ setAttribute: "async | false", internal_id: 7, },
 		{ addEventListener: "load", internal_id: 7, },
 		{ appendChild: 5, internal_id: HEAD_ID, },
 		{ appendChild: 6, internal_id: HEAD_ID, },
@@ -340,17 +337,17 @@ QUnit.test( "load multiple scripts (ordered async)", function test(assert){
 
 	var script1 = win.document.createElement( "script" );
 	script1.setAttribute( "src", "a.js" );
-	script1.setAttribute( "async", false );
+	script1.async = false;
 	script1.addEventListener( "load", done );
 
 	var script2 = win.document.createElement( "script" );
 	script2.setAttribute( "src", "b.js" );
-	script2.setAttribute( "async", false );
+	script2.async = false;
 	script2.addEventListener( "load", done );
 
 	var script3 = win.document.createElement( "script" );
 	script3.setAttribute( "src", "c.js" );
-	script3.setAttribute( "async", false );
+	script3.async = false;
 	script3.addEventListener( "load", function onload(){
 		assert.deepEqual( rActual, rExpected, "logs" );
 		done();
@@ -450,7 +447,7 @@ QUnit.test( "preload a script", function test(assert){
 		log,
 		error,
 		resources: [
-			{ url: "a.js", preloadDelay: 25, preload: true, },
+			{ url: "a.js", preloadDelay: "invalid", preload: true, },
 		],
 	} );
 
@@ -493,8 +490,8 @@ QUnit.test( "preload multiple scripts", function test(assert){
 		{ appendChild: 6, internal_id: HEAD_ID, },
 		{ appendChild: 7, internal_id: HEAD_ID, },
 		{ dispatchEvent: "DOMContentLoaded", internal_id: DOCUMENT_ID, },
-		{ dispatchEvent: "load", internal_id: 6, },
 		{ dispatchEvent: "load", internal_id: WINDOW_ID, },
+		{ dispatchEvent: "load", internal_id: 6, },
 		{ dispatchEvent: "load", internal_id: 7, },
 		{ dispatchEvent: "load", internal_id: 5, },
 	];
@@ -624,15 +621,12 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 		{ dispatchEvent: "load", internal_id: 5, },
 		{ createElement: "script", internal_id: 8, },
 		{ setAttribute: "src | a.js", internal_id: 8, },
-		{ setAttribute: "async | false", internal_id: 8, },
 		{ addEventListener: "load", internal_id: 8, },
 		{ createElement: "script", internal_id: 9, },
 		{ setAttribute: "src | b.js", internal_id: 9, },
-		{ setAttribute: "async | false", internal_id: 9, },
 		{ addEventListener: "load", internal_id: 9, },
 		{ createElement: "script", internal_id: 10, },
 		{ setAttribute: "src | c.js", internal_id: 10, },
-		{ setAttribute: "async | false", internal_id: 10, },
 		{ addEventListener: "load", internal_id: 10, },
 		{ appendChild: 8, internal_id: HEAD_ID, },
 		{ appendChild: 9, internal_id: HEAD_ID, },
@@ -702,17 +696,17 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 	function loadScripts() {
 		var script1 = win.document.createElement( "script" );
 		script1.setAttribute( "src", "a.js" );
-		script1.setAttribute( "async", false );
+		script1.async = false;
 		script1.addEventListener( "load", done );
 
 		var script2 = win.document.createElement( "script" );
 		script2.setAttribute( "src", "b.js" );
-		script2.setAttribute( "async", false );
+		script2.async = false;
 		script2.addEventListener( "load", done );
 
 		var script3 = win.document.createElement( "script" );
 		script3.setAttribute( "src", "c.js" );
-		script3.setAttribute( "async", false );
+		script3.async = false;
 		script3.addEventListener( "load", function onload(){
 			var pActual =
 				win.performance.getEntriesByName( "a.js" )
@@ -802,14 +796,13 @@ if (typeof window == "undefined" || Function("return this")() !== window || !win
 		var tExpected = "https://a.tld/funny";
 		var sExpected = "http://some.tld/foo/bar";
 		var uExpected = "https://other.tld";
-		var mExpected = "https://other.tld";
+		var mExpected = "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha";
 
 		var win = $DOM( {
 			replaceGlobals: true,
 			log: function log(){},
 			error: function error(){},
 			location: "http://user1:pw1@some.tld:8080/foo/bar?bam=baz#haha",
-			baseURI: "https://other.tld",
 		} );
 		win.location.reload();
 
