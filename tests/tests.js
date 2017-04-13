@@ -314,9 +314,9 @@ QUnit.test( "load multiple scripts (ordered async)", function test(assert){
 		{ appendChild: 7, internal_id: HEAD_ID, },
 		{ dispatchEvent: "DOMContentLoaded", internal_id: DOCUMENT_ID, },
 		{ dispatchEvent: "load", internal_id: WINDOW_ID, },
-		{ updateLoadQueue: "b.js", internal_id: 6, },
-		{ updateLoadQueue: "c.js", internal_id: 7, },
-		{ updateLoadQueue: "a.js", internal_id: 5, },
+		{ updateExecQueue: "b.js", internal_id: 6, },
+		{ updateExecQueue: "c.js", internal_id: 7, },
+		{ updateExecQueue: "a.js", internal_id: 5, },
 		{ dispatchEvent: "load", internal_id: 5, },
 		{ dispatchEvent: "load", internal_id: 6, },
 		{ dispatchEvent: "load", internal_id: 7, },
@@ -631,10 +631,10 @@ QUnit.test( "preload multiple scripts, then load them (ordered async)", function
 		{ appendChild: 8, internal_id: HEAD_ID, },
 		{ appendChild: 9, internal_id: HEAD_ID, },
 		{ appendChild: 10, internal_id: HEAD_ID, },
-		{ updateLoadQueue: "c.js", internal_id: 10, },
-		{ updateLoadQueue: "a.js", internal_id: 8, },
+		{ updateExecQueue: "c.js", internal_id: 10, },
+		{ updateExecQueue: "a.js", internal_id: 8, },
 		{ dispatchEvent: "load", internal_id: 8, },
-		{ updateLoadQueue: "b.js", internal_id: 9, },
+		{ updateExecQueue: "b.js", internal_id: 9, },
 		{ dispatchEvent: "load", internal_id: 9, },
 		{ dispatchEvent: "load", internal_id: 10, },
 	];
@@ -1065,6 +1065,45 @@ QUnit.test( "document.readyState", function test(assert){
 	} );
 	win4.document.addEventListener( "DOMContentLoaded", callDone );
 	win4.addEventListener( "load", callDone );
+} );
+
+QUnit.test( "scripts: initial and API", function test(assert){
+	var done = assert.async();
+	assert.expect( 1 );
+
+	var rExpected = [
+	];
+
+	var { logs: rActual, log, error, } = collectLogs();
+
+	var win = $DOM( {
+		sequentialIds: true,
+		log,
+		error,
+		docReadyDelay: 30,
+		resources: [
+			{ url: "a.js", loadDelay: 50, load: true, },
+			{ url: "b.js", loadDelay: 10, load: true, },
+			{ url: "c.js", loadDelay: 20, load: true, },
+		],
+		initialDOM: {
+			head: [
+				{ tagName: "script", src: "a.js", },
+			],
+			body: [
+				{ tagName: "script", src: "b.js", },
+			],
+		},
+	} );
+
+	var script = win.document.createElement( "script" );
+	script.setAttribute( "src", "c.js" );
+	win.document.body.appendChild( script );
+
+	win.document.head.childNodes[0].addEventListener( "load", function load(){
+		assert.deepEqual( rActual, rExpected, "all scripts" );
+		done();
+	} );
 } );
 
 

@@ -61,12 +61,8 @@
 			opts.docReadyState = "loading";
 		}
 
-		// emulate document.readyState (DOMContentLoaded and window.load)
-		opts.docReadyDelay = Math.max( 0, Number( opts.docReadyDelay ) || 5 );
 		var docReadyState = opts.docReadyState;
-		if (docReadyState != "complete") {
-			setTimeout( advanceReadyState, opts.docReadyDelay );
-		}
+		var docReadyDelay = opts.docReadyDelay = Math.max( 0, Number( opts.docReadyDelay ) || 5 );
 
 		// copy resources list and normalize its entries
 		opts.resources = opts.resources.map(function fix(resource){
@@ -106,7 +102,8 @@
 		Element.prototype.dispatchEvent = dispatchEvent;
 
 		var sequentialId = 0;
-		var loadQueue = [];
+		var deferQueue = [];
+		var execQueue = [];
 		var silent = true;
 		var locObj = setupLocation( opts.location );
 
@@ -144,6 +141,15 @@
 			set(val) { locObj.href = val; return val; },
 			configurable: true,
 		} );
+
+		if ("initialDOM" in opts) {
+			processInitialDOM( opts.initialDOM );
+		}
+
+		// emulate document.readyState (DOMContentLoaded and window.load)
+		if (docReadyState != "complete") {
+			setTimeout( advanceReadyState, docReadyDelay );
+		}
 
 		silent = false;
 
@@ -260,7 +266,7 @@
 			updateTagNameNodeLists( childElement );
 
 			if (childElement.tagName.toLowerCase() == "link" && childElement.rel == "preload") {
-				var resource = findMatchingOptResource( childElement.href );
+				let resource = findMatchingOptResource( childElement.href );
 
 				if (resource) {
 					fakePreload( resource, childElement );
@@ -270,18 +276,20 @@
 				}
 			}
 			else if (/^(?:script|link|img)$/i.test( childElement.tagName )) {
-				var url = (/^(?:script|img)$/i.test( childElement.tagName )) ?
+				let url = (/^(?:script|img)$/i.test( childElement.tagName )) ?
 					childElement.src :
 					childElement.href;
-				var resource = findMatchingOptResource( url );
+				let resource = findMatchingOptResource( url );
 
 				if (resource) {
-					// track load-order queue (for ordered-async on scripts)?
-					if (opts.scriptAsync && childElement.tagName.toLowerCase() == "script" && childElement.async === false) {
-						loadQueue.push( {url: url, element: childElement} );
+					// track execution-order queue (for ordered-async on scripts)?
+					let enforceExecOrder = (opts.scriptAsync && childElement.tagName.toLowerCase() == "script" && childElement.async === false);
+
+					if (enforceExecOrder) {
+						execQueue.push( {url: url, element: childElement} );
 					}
 
-					fakeLoad( resource, childElement );
+					fakeLoad( resource, childElement, enforceExecOrder );
 				}
 				else {
 					opts.error( new Error( "appendChild: Load resource not found (" + url + "; " + childElement._internal_id + ")" ) );
@@ -333,7 +341,7 @@
 			opts.log( {removeEventListener: evtName, internal_id: this._internal_id} );
 
 			if (this._eventHandlers[evtName]) {
-				var idx = this._eventHandlers[evtName].indexOf( handler );
+				let idx = this._eventHandlers[evtName].indexOf( handler );
 				this._eventHandlers[evtName].splice( idx, 1 );
 			}
 		}
@@ -350,9 +358,9 @@
 			evt.target = evt.currentTarget = this;
 
 			if (this._eventHandlers[evt.type]) {
-				var evtHandlers = this._eventHandlers[evt.type].slice();
+				let evtHandlers = this._eventHandlers[evt.type].slice();
 
-				for (var i = 0; i < evtHandlers.length; i++) {
+				for (let i = 0; i < evtHandlers.length; i++) {
 					try { evtHandlers[i].call( this, evt ); } catch (err) {}
 				}
 			}
@@ -393,9 +401,9 @@
 				}
 
 				// merge element's node-lists upward
-				for (var i = 0; i < keys.length; i++) {
+				for (let i = 0; i < keys.length; i++) {
 					el._tagNameNodeLists[keys[i]] = el._tagNameNodeLists[keys[i]] || [];
-					for (var j = 0; j < element._tagNameNodeLists[keys[i]].length; j++) {
+					for (let j = 0; j < element._tagNameNodeLists[keys[i]].length; j++) {
 						if (!~el._tagNameNodeLists[keys[i]].indexOf( element._tagNameNodeLists[keys[i]][j] )) {
 							el._tagNameNodeLists[keys[i]].push( element._tagNameNodeLists[keys[i]][j] );
 						}
@@ -413,7 +421,7 @@
 
 			// recursively walk up the element tree
 			while (el != null) {
-				var idx;
+				let idx;
 				if (el._tagNameNodeLists[tagName] && (idx = el._tagNameNodeLists[tagName].indexOf( element )) != -1) {
 					el._tagNameNodeLists[tagName].splice( idx, 1 );
 				}
@@ -422,7 +430,7 @@
 		}
 
 		function findMatchingOptResource(url) {
-			for (var i = 0; i < opts.resources.length; i++) {
+			for (let i = 0; i < opts.resources.length; i++) {
 				if (opts.resources[i].url == url) {
 					return opts.resources[i];
 				}
@@ -444,7 +452,13 @@
 			}, resource.preloadDelay );
 		}
 
-		function fakeLoad(resource,element) {
+		function fakeLoad(resource,element,enforceExecOrder) {
+			setTimeout( function load(){
+				resourceLoaded( resource, element, enforceExecOrder );
+			}, resource.loadDelay );
+		}
+
+		function resourceLoaded(resource,element,enforceExecOrder) {
 			if (resource.load === true) {
 				var evt = new Event( "load" );
 			}
@@ -452,17 +466,15 @@
 				var evt = new Event( "error" );
 			}
 
-			setTimeout( function load(){
-				// simulating ordered-async for <script> elements?
-				if (opts.scriptAsync && element.tagName.toLowerCase() == "script" && element.async === false) {
-					updateLoadQueue( resource.url, element, evt );
-				}
-				else {
-					element.dispatchEvent( evt );
-				}
+			// simulating ordered-async for <script> elements?
+			if (enforceExecOrder) {
+				updateExecQueue( resource.url, element, evt );
+			}
+			else {
+				element.dispatchEvent( evt );
+			}
 
-				addPerformanceEntry( resource.url );
-			}, resource.loadDelay );
+			addPerformanceEntry( resource.url );
 		}
 
 		function Event(type) {
@@ -493,23 +505,23 @@
 		}
 
 		// ensures load event order (queue) for ordered-async
-		function updateLoadQueue(url,element,evt) {
+		function updateExecQueue(url,element,evt) {
 			var dispatchReady = true;
 			var idx = 0;
 
-			while (loadQueue.length > 0 && idx < loadQueue.length) {
+			while (execQueue.length > 0 && idx < execQueue.length) {
 				// update queue item?
-				if (loadQueue[idx].url == url && loadQueue[idx].element == element) {
-					opts.log( {updateLoadQueue: url, internal_id: element._internal_id} );
-					loadQueue[idx].evt = evt;
+				if (execQueue[idx].url == url && execQueue[idx].element == element) {
+					opts.log( {updateExecQueue: url, internal_id: element._internal_id} );
+					execQueue[idx].evt = evt;
 				}
 
 				if (dispatchReady) {
-					var entry = loadQueue[0];
+					let entry = execQueue[0];
 
 					if (entry.evt) {
 						entry.element.dispatchEvent( entry.evt );
-						loadQueue.shift();
+						execQueue.shift();
 						// NOTE: since we're shifting off index 0, no need
 						// to increment `idx`
 					}
@@ -532,39 +544,143 @@
 
 		function advanceReadyState(){
 			if (docReadyState == "loading") {
+				// defer-scripts waiting?
+				if (deferQueue.length > 0) {
+					for (let i = 0; i < deferQueue.length; i++) {
+						resourceLoaded( deferQueue[i].resource, deferQueue[i].element, /*enforceExecOrder=*/true );
+					}
+					deferQueue.length = 0;
+				}
+
 				docReadyState = "interactive";
 				var evt = new Event( "DOMContentLoaded" );
 				documentElement.dispatchEvent( evt );
-				setTimeout( advanceReadyState, opts.docReadyDelay );
+				docReadyDelay = opts.docReadyDelay;
+				setTimeout( advanceReadyState, docReadyDelay );
 			}
-			// otherwise, must be "interactive"
+			// otherwise, must already be "interactive"
 			else {
 				docReadyState = "complete";
 				var evt = new Event( "load" );
 				mockDOM.dispatchEvent( evt );
 			}
 		}
+
+		function processInitialDOM(DOM) {
+			if (Array.isArray( DOM.head )) {
+				for (let i = 0; i < DOM.head.length; i++) {
+					processInitialElement( documentElement.head, DOM.head[i] );
+				}
+			}
+			if (Array.isArray( DOM.body )) {
+				for (let i = 0; i < DOM.body.length; i++) {
+					processInitialElement( documentElement.body, DOM.body[i] );
+				}
+			}
+		}
+
+		function processInitialElement(parentElem,entry) {
+			var tagName = (entry.tagName || "div").toLowerCase();
+			var element = createElement( tagName );
+			var entryProps = Object.keys( entry );
+
+			// skip some properties
+			entryProps = entryProps.filter( function skipProperty(prop){
+				if (prop == "tagName") return false;
+				if (tagName == "script" && prop == "async" && !opts.scriptAsync) return false;
+				if (tagName == "link" && prop == "rel" && entry.rel == "preload" && !opts.linkPreload) return false;
+				return true;
+			} );
+
+			// need to undo some default properties from `createElement(..)` API?
+			if (/^(?:script|link|img)$/.test( tagName )) {
+				if (tagName == "script") {
+					delete element.async;
+					delete element.src;
+				}
+				if (tagName == "link") {
+					delete element.href;
+				}
+				if (tagName == "img") {
+					delete element.src;
+				}
+			}
+
+			// copy remaining properties
+			for (let i = 0; i < entryProps.length; i++) {
+				element[entryProps[i]] = entry[entryProps[i]];
+			}
+
+			// correctly default `async` on `<script>`
+			if (tagName == "script" &&
+				!("async" in entry) || ("defer" in entry)
+			) {
+				element.async = false;
+			}
+
+			// "insert" element into DOM
+			parentElem.childNodes.push( element );
+			element.parentNode = parentElem;
+			updateTagNameNodeLists( element );
+
+			// `DOMContentLoaded` still yet to fire, and element makes a resource request?
+			if (
+				docReadyState == "loading" &&
+				(
+					(tagName == "script" && "src" in element) ||
+					(tagName == "img" && "src" in element) ||
+					(tagName == "link" && "href" in element)
+				)
+			) {
+				let url = /script|img/.test( tagName ) ? element.src : element.href;
+				let resource = findMatchingOptResource( url );
+
+				// registered resource?
+				if (resource) {
+					// resource preload element?
+					if (tagName == "link" && element.rel == "preload") {
+						fakePreload( resource, element );
+					}
+					// script-defer element?
+					else if (tagName == "script" && "src" in element && "defer" in element) {
+						execQueue.push( {url, element} );
+						deferQueue.push( {url, element, resource} );
+
+						// need to delay `DOMContentLoaded` for this resource?
+						if (resource.loadDelay > docReadyDelay) {
+							docReadyDelay = Math.max( docReadyDelay, resource.loadDelay );
+						}
+					}
+					// otherwise, normal resource request
+					else {
+						let enforceExecOrder = !(tagName == "script" && element.async);
+
+						// resource request also needs to go into execution-order queue?
+						if (enforceExecOrder)  {
+							execQueue.push( {url, element} );
+						}
+
+						fakeLoad( resource, element, enforceExecOrder );
+					}
+				}
+				else {
+					opts.error( new Error( "initialDOM: Resource not found (" + url + ")" ) );
+				}
+			}
+		}
 	}
 
 	function setupLocation(location) {
 		var loc = {
-			toString() {
-				return location;
-			},
-			get href() {
-				return location;
-			},
+			toString() { return location; },
+			get href() { return location; },
 			set href(val) {
 				location = val;
 				parseLocation();
 			},
-			assign: function assign(val){
-				this.href = val;
-			},
+			assign: function assign(val){ this.href = val; },
 			reload: function reload(){},
-			replace: function replace(val){
-				this.href = val;
-			}
+			replace: function replace(val){ this.href = val; },
 		};
 
 		loc.href = location;

@@ -133,6 +133,8 @@ The options that can be passed to `$DOM(..)`:
 	- `loadDelay` (optional): integer of milliseconds to emulate as delay for loading the element (with a `<link>`, `<script>`, or `<img>` element). If provided, must be greater than `0`; otherwise, defaults to `10`.
 	- `load` (optional): boolean that indicates if the load should complete successfully (`true`) or as a loading error (`false`).
 
+* `initialDOM` (`object`): Specify `head` and `body` arrays of objects that represent the initial DOM elements as if they had been parsed from the markup.
+
 ## Using with Node.js
 
 You'll most likely use this utility to mock out a DOM for tests in Node.js. To do so, install with `npm` then require it in your script:
