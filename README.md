@@ -20,13 +20,13 @@ Example:
 
 ```js
 var win = $DOM( {
-	log(msg) {
-		console.log( "msg:", msg );
-	},
-	resources: [
-		{ url: "http://some.tld/a.js", loadDelay: 300, load: true },
-		{ url: "http://some.tld/b.css", loadDelay: 400, load: false },
-	],
+    log(msg) {
+        console.log( "msg:", msg );
+    },
+    resources: [
+        { url: "http://some.tld/a.js", loadDelay: 300, load: true },
+        { url: "http://some.tld/b.css", loadDelay: 400, load: false },
+    ],
 } );
 
 var elem = win.document.createElement( "script" );
@@ -86,16 +86,16 @@ The following subset of DOM features are mocked:
 * `document.readyState`
 * `document` event: `DOMContentLoaded`
 * DOM `Element`s:
-	- `appendChild(..)`
-	- `removeChild(..)`
-	- `setAttribute(..)`
-	- `getAttribute(..)`
-	- `addEventListener(..)`
-	- `removeEventListener(..)`
-	- `dispatchEvent(..)`
-	- `getElementsByTagName(..)`
-	- event: `load`
-	- event: `error`
+    - `appendChild(..)`
+    - `removeChild(..)`
+    - `setAttribute(..)`
+    - `getAttribute(..)`
+    - `addEventListener(..)`
+    - `removeEventListener(..)`
+    - `dispatchEvent(..)`
+    - `getElementsByTagName(..)`
+    - event: `load`
+    - event: `error`
 * `window.performance.getEntriesByName(..)`
 
 ### Options
@@ -126,12 +126,12 @@ The options that can be passed to `$DOM(..)`:
 
 * `resources` (`array`): Specify the resources that should be available for the mock DOM to pretend to load. Each entry in this array is an object including the following specifiers:
 
-	- `url` (required): the exact URL that the resource loading request should match. **Note:** no normalization is done on either these URLs or those requested by mock DOM elements.
-	- `cached` (optional): boolean that controls if the resource is treated as if it was already fully loaded into the "cache" before any of the DOM processing occurs. Also adds an entry to be exposed by `window.performance.getEntriesByName(..)`. Overrides `preloadDelay`, `preload`, `loadDelay`, and `load` specifiers for that resource entry.
-	- `preloadDelay` (optional): integer of milliseconds to emulate as delay for preloading the element (with `<link rel=preload>` functionality). If provided, must be greater than `0`; otherwise, defaults to `10`.
-	- `preload` (optional): boolean that indicates if the preload should be complete successfully (`true`) or as a loading error (`false`).
-	- `loadDelay` (optional): integer of milliseconds to emulate as delay for loading the element (with a `<link>`, `<script>`, or `<img>` element). If provided, must be greater than `0`; otherwise, defaults to `10`.
-	- `load` (optional): boolean that indicates if the load should complete successfully (`true`) or as a loading error (`false`).
+    - `url` (required): the exact URL that the resource loading request should match. **Note:** no normalization is done on either these URLs or those requested by mock DOM elements.
+    - `cached` (optional): boolean that controls if the resource is treated as if it was already fully loaded into the "cache" before any of the DOM processing occurs. Also adds an entry to be exposed by `window.performance.getEntriesByName(..)`. Overrides `preloadDelay`, `preload`, `loadDelay`, and `load` specifiers for that resource entry.
+    - `preloadDelay` (optional): integer of milliseconds to emulate as delay for preloading the element (with `<link rel=preload>` functionality). If provided, must be greater than `0`; otherwise, defaults to `10`.
+    - `preload` (optional): boolean that indicates if the preload should be complete successfully (`true`) or as a loading error (`false`).
+    - `loadDelay` (optional): integer of milliseconds to emulate as delay for loading the element (with a `<link>`, `<script>`, or `<img>` element). If provided, must be greater than `0`; otherwise, defaults to `10`.
+    - `load` (optional): boolean that indicates if the load should complete successfully (`true`) or as a loading error (`false`).
 
 * `initialDOM` (`object`): Specify `head` and `body` arrays of objects that represent the initial DOM elements as if they had been parsed from the markup.
 
@@ -181,7 +181,7 @@ A comprehensive test suite is included in this repository, as well as the npm pa
 
 3. Ensure the Node.js test utility dependencies are installed by running `npm install` from the project root directory.
 
-4. Because of how npm lifecyle events (currently: npm v4) work, `npm install` will have the side effect of automatically running the build and test utilities for you. So, no further action should be needed on your part. Starting with npm v5, the build utility will still be run automatically on `npm install`, but the test utility will not.
+4. Because of how npm lifecycle events (currently: npm v4) work, `npm install` will have the side effect of automatically running the build and test utilities for you. So, no further action should be needed on your part. Starting with npm v5, the build utility will still be run automatically on `npm install`, but the test utility will not.
 
 To run the test utility with npm:
 
