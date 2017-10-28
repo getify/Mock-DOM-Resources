@@ -12,7 +12,7 @@
 		"prepublish": "npm run build && npm test"
 	},
 	"devDependencies": {
-		"qunitjs": "~2.3.0",
+		"qunitjs": "~2.4.1",
 		"stable-timers": "~1.0.0"
 	},
 	"repository": "getify/Mock-DOM-Resources",
